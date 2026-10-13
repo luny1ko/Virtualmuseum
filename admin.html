@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Визуальный редактор экспозиции музея | Панель управления</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Верхняя панель действий -->
+    <header class="admin-topbar">
+      <div class="topbar-brand">
+        <span class="brand-icon">🏛</span>
+        <div>
+          <h1>Панель управления витринами</h1>
+          <p>Интерактивная расстановка стендов и синхронизация базы</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <!-- Кнопка возврата в музей (в текущей вкладке) -->
+        <a href="index.html" class="btn btn-back">← Вернуться в музей</a>
+        
+        <label class="btn btn-secondary file-upload-label">
+          📂 Открыть exhibits.json
+          <input type="file" id="json-file-input" accept=".json" hidden>
+        </label>
+        <button id="btn-fetch-current" class="btn btn-secondary" title="Сбросить до исходного файла">🔄 Сбросить к файлу</button>
+        <button id="btn-export-json" class="btn btn-primary" title="Скачать файл для вставки в проект">📥 Скачать exhibits.json</button>
+      </div>
+    </header>
+
+    <!-- Основной рабочий экран -->
+    <main class="admin-workspace">
+      <!-- Левая колонка: интерактивный холст зала -->
+      <section class="canvas-section">
+        <div class="canvas-controls">
+          <label for="hall-select">Текущий зал экспозиции:</label>
+          <select id="hall-select" class="form-select"></select>
+          <span class="canvas-hint">Кликните по фото зала, чтобы установить или переместить витрину</span>
+        </div>
+
+        <div class="canvas-viewport" id="canvas-viewport">
+          <img id="hall-canvas-img" src="" alt="Фон зала" class="canvas-img">
+          <div id="canvas-markers-layer" class="canvas-markers-layer"></div>
+        </div>
+      </section>
+
+      <!-- Правая колонка: редактор выбранной витрины -->
+      <aside class="editor-section">
+        <div class="editor-header">
+          <h2 id="editor-heading">Редактирование витрины</h2>
+          <button id="btn-new-vitrine" class="btn btn-sm btn-accent">+ Новая витрина</button>
+        </div>
+
+        <!-- Список существующих витрин зала -->
+        <div class="vitrines-list-box">
+          <span class="list-label">Витрины в этом зале:</span>
+          <div id="vitrines-chips" class="vitrines-chips"></div>
+        </div>
+
+        <form id="vitrine-form" class="vitrine-form">
+          <input type="hidden" id="form-vitrine-id">
+
+          <div class="form-row coords-row">
+            <div class="form-group">
+              <label>Координата X (%):</label>
+              <input type="number" id="form-x" class="form-input" step="0.1" min="0" max="100" required>
+            </div>
+            <div class="form-group">
+              <label>Координата Y (%):</label>
+              <input type="number" id="form-y" class="form-input" step="0.1" min="0" max="100" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Название стенда / витрины:</label>
+            <input type="text" id="form-title" class="form-input" placeholder="Витрина №1: Основание колледжа" required>
+          </div>
+
+          <div class="form-group">
+            <label>Тег эпохи:</label>
+            <input type="text" id="form-epoch" class="form-input" placeholder="1930–1940 гг.">
+          </div>
+
+          <div class="form-group">
+            <label>Путь к 3D-модели (.glb / .gltf):</label>
+            <input type="text" id="form-model3d" class="form-input" placeholder="assets/models/stand.glb или ссылка">
+          </div>
+
+          <div class="form-group">
+            <label>Текстовое описание витрины:</label>
+            <textarea id="form-desc" class="form-textarea" rows="3" placeholder="Подробное описание содержимого витрины..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Текст для аудиогида экскурсовода:</label>
+            <textarea id="form-audio" class="form-textarea" rows="2" placeholder="Текст, который зачитывает синтезатор речи..."></textarea>
+          </div>
+
+          <!-- Динамический блок фотографий витрины -->
+          <div class="form-group">
+            <div class="group-title-row">
+              <label>Фотографии витрины в галерею:</label>
+              <button type="button" id="btn-add-image" class="btn btn-xs btn-secondary">+ Добавить фото</button>
+            </div>
+            <div id="images-container" class="dynamic-items-container"></div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="btn-save-vitrine" class="btn btn-primary">Сохранить изменения</button>
+            <button type="button" id="btn-delete-vitrine" class="btn btn-danger">Удалить витрину</button>
+          </div>
+        </form>
+      </aside>
+    </main>
+
+    <!-- Всплывающий неоновый виджет-уведомление (Glassmorphic Toast) -->
+    <div id="admin-toast" class="admin-toast" aria-live="polite">
+      <span class="toast-icon" id="toast-icon">✓</span>
+      <span class="toast-message" id="toast-message">Сохранено</span>
+    </div>
+  </div>
+
+  <script src="admin.js" type="module"></script>
+</body>
+</html>
