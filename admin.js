@@ -1,6 +1,8 @@
+// admin.js
 /**
- * Панель управления контентом виртуального музея
- * Синхронизация через localStorage, экспорт в exhibits.json и Toast-уведомления.
+ * Панель управления контентом виртуального музея ЛДПК
+ * Поддержка редактирования панорам залов и схемы здания,
+ * динамическая расстановка и удаление витрин, экспорт exhibits.json.
  */
 class MuseumAdmin {
   constructor() {
@@ -8,15 +10,30 @@ class MuseumAdmin {
     this.currentHallId = null;
     this.selectedVitrineId = null;
     this.toastTimeout = null;
+    this.adminViewMode = 'hall'; // 'hall' (фото зала) или 'building-plan' (схема здания)
 
     this.dom = {
       fileInput: document.getElementById('json-file-input'),
       btnFetch: document.getElementById('btn-fetch-current'),
       btnExport: document.getElementById('btn-export-json'),
+      
+      // Переключатель режимов холста
+      viewModeSelect: document.getElementById('admin-view-mode'),
       hallSelect: document.getElementById('hall-select'),
+      hallSelectLabel: document.getElementById('hall-select-label'),
+      canvasHint: document.getElementById('canvas-hint'),
+
+      // Холст фото зала
       viewport: document.getElementById('canvas-viewport'),
       hallImg: document.getElementById('hall-canvas-img'),
       markersLayer: document.getElementById('canvas-markers-layer'),
+
+      // Холст схемы здания
+      planWrapper: document.getElementById('admin-plan-wrapper'),
+      adminSvgMap: document.getElementById('admin-svg-map'),
+      planMarkersLayer: document.getElementById('admin-plan-markers-layer'),
+
+      // Правая панель редактора витрины
       chipsBox: document.getElementById('vitrines-chips'),
       editorHeading: document.getElementById('editor-heading'),
       btnNewVitrine: document.getElementById('btn-new-vitrine'),
@@ -32,7 +49,8 @@ class MuseumAdmin {
       imagesContainer: document.getElementById('images-container'),
       btnAddImage: document.getElementById('btn-add-image'),
       btnDeleteVitrine: document.getElementById('btn-delete-vitrine'),
-      // Toast элементы
+
+      // Toast-уведомления
       toast: document.getElementById('admin-toast'),
       toastIcon: document.getElementById('toast-icon'),
       toastMessage: document.getElementById('toast-message')
@@ -51,7 +69,7 @@ class MuseumAdmin {
         this.populateHallSelect();
         return;
       } catch (e) {
-        console.warn('Ошибка чтения кэша');
+        console.warn('Ошибка чтения кэша, запрашиваем файл exhibits.json...');
       }
     }
     await this.fetchDefaultData();
@@ -73,16 +91,46 @@ class MuseumAdmin {
       this.renderHallCanvas();
     });
 
-    this.dom.viewport.addEventListener('click', (e) => this.handleCanvasClick(e));
+    // Переключение между холстом фото зала и схемой здания
+    if (this.dom.viewModeSelect) {
+      this.dom.viewModeSelect.addEventListener('change', () => {
+        this.adminViewMode = this.dom.viewModeSelect.value;
+        const isPlan = this.adminViewMode === 'building-plan';
+
+        if (this.dom.planWrapper) this.dom.planWrapper.classList.toggle('hidden', !isPlan);
+        if (this.dom.hallImg) this.dom.hallImg.classList.toggle('hidden', isPlan);
+        if (this.dom.markersLayer) this.dom.markersLayer.classList.toggle('hidden', isPlan);
+        if (this.dom.hallSelect) this.dom.hallSelect.classList.toggle('hidden', isPlan);
+        if (this.dom.hallSelectLabel) this.dom.hallSelectLabel.classList.toggle('hidden', isPlan);
+
+        if (isPlan) {
+          if (this.dom.canvasHint) this.dom.canvasHint.textContent = 'Кликните по любой комнате схемы, чтобы переместить стенд';
+          this.renderAdminPlanMarkers();
+        } else {
+          if (this.dom.canvasHint) this.dom.canvasHint.textContent = 'Кликните по фото зала, чтобы установить координаты витрины';
+          this.renderHallCanvas();
+        }
+      });
+    }
+
+    // Клик по холсту панорамы зала
+    this.dom.viewport.addEventListener('click', (e) => {
+      if (this.adminViewMode === 'hall') {
+        this.handleCanvasClick(e);
+      }
+    });
+
+    // Клик по схеме здания
+    if (this.dom.adminSvgMap) {
+      this.dom.adminSvgMap.addEventListener('click', (e) => this.handlePlanCanvasClick(e));
+    }
+
     this.dom.btnNewVitrine.addEventListener('click', () => this.createNewVitrine());
     this.dom.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
     this.dom.btnDeleteVitrine.addEventListener('click', () => this.deleteCurrentVitrine());
     this.dom.btnAddImage.addEventListener('click', () => this.addImageRow('', ''));
   }
 
-  /**
-   * Неоновое уведомление Toast вместо браузерного alert
-   */
   showToast(message, type = 'success') {
     if (this.toastTimeout) {
       clearTimeout(this.toastTimeout);
@@ -150,6 +198,9 @@ class MuseumAdmin {
 
     this.currentHallId = this.data.halls[0].id;
     this.renderHallCanvas();
+    if (this.adminViewMode === 'building-plan') {
+      this.renderAdminPlanMarkers();
+    }
   }
 
   getCurrentHall() {
@@ -169,7 +220,7 @@ class MuseumAdmin {
     this.dom.markersLayer.innerHTML = '';
     this.dom.chipsBox.innerHTML = '';
 
-    const vitrines = hall.hotspots || [];
+    const vitrines = hall?.hotspots || [];
 
     vitrines.forEach((v, index) => {
       const marker = document.createElement('div');
@@ -199,14 +250,29 @@ class MuseumAdmin {
 
   selectVitrine(vitrineId) {
     this.selectedVitrineId = vitrineId;
-    const hall = this.getCurrentHall();
-    const vitrine = hall?.hotspots?.find((v) => v.id === vitrineId);
+    let vitrine = null;
+
+    // Поиск витрины по всем залам
+    (this.data.halls || []).forEach((h) => {
+      const found = h.hotspots?.find((v) => v.id === vitrineId);
+      if (found) {
+        vitrine = found;
+        if (this.currentHallId !== h.id) {
+          this.currentHallId = h.id;
+          this.dom.hallSelect.value = h.id;
+          if (this.adminViewMode === 'hall') {
+            this.dom.hallImg.src = h.bgImage || '';
+          }
+        }
+      }
+    });
+
     if (!vitrine) return;
 
     this.dom.editorHeading.textContent = `Редактирование: ${vitrine.title}`;
     this.dom.formId.value = vitrine.id;
-    this.dom.formX.value = vitrine.x;
-    this.dom.formY.value = vitrine.y;
+    this.dom.formX.value = vitrine.x !== undefined ? vitrine.x : 50.0;
+    this.dom.formY.value = vitrine.y !== undefined ? vitrine.y : 50.0;
     this.dom.formTitle.value = vitrine.title || '';
     this.dom.formEpoch.value = vitrine.epoch || '';
     this.dom.formModel3d.value = vitrine.model3d || '';
@@ -219,9 +285,15 @@ class MuseumAdmin {
     });
 
     this.renderMarkersAndChips();
+    if (this.adminViewMode === 'building-plan') {
+      this.renderAdminPlanMarkers();
+    }
   }
 
   createNewVitrine() {
+    const hall = this.getCurrentHall() || this.data.halls[0];
+    if (!hall) return;
+
     const newId = `vitrine-${Date.now().toString().slice(-4)}`;
     this.selectedVitrineId = newId;
 
@@ -237,8 +309,28 @@ class MuseumAdmin {
     this.dom.imagesContainer.innerHTML = '';
     this.addImageRow('', '');
 
-    this.showToast('Кликните по фото слева, чтобы поставить витрину', 'info');
+    if (!hall.hotspots) hall.hotspots = [];
+    hall.hotspots.push({
+      id: newId,
+      x: 50.0,
+      y: 50.0,
+      mapX: 50.0,
+      mapY: 50.0,
+      title: 'Новая витрина',
+      epoch: '',
+      model3d: '',
+      description: '',
+      audioText: '',
+      images: [],
+      extraInfo: []
+    });
+
+    this.persistData();
+    this.showToast('Кликните по фото или схеме, чтобы задать положение витрины', 'info');
     this.renderMarkersAndChips();
+    if (this.adminViewMode === 'building-plan') {
+      this.renderAdminPlanMarkers();
+    }
   }
 
   handleCanvasClick(event) {
@@ -262,6 +354,114 @@ class MuseumAdmin {
         this.renderMarkersAndChips();
       }
     }
+  }
+
+  /* ==========================================================================
+     ЛОГИКА РАБОТЫ СО СХЕМОЙ ЗДАНИЯ (АРХИТЕКТУРНЫЙ ПЛАН)
+     ========================================================================== */
+  getHallRoomBounds(hallId) {
+    const bounds = {
+      'college-history': { x: 20, y: 20, w: 380, h: 230 },
+      'achievements':    { x: 20, y: 260, w: 155, h: 520 },
+      'region-history':  { x: 185, y: 260, w: 215, h: 280 },
+      'military-glory':  { x: 185, y: 550, w: 215, h: 230 }
+    };
+    return bounds[hallId] || { x: 20, y: 20, w: 380, h: 230 };
+  }
+
+  renderAdminPlanMarkers() {
+    if (!this.dom.planMarkersLayer) return;
+    const layer = this.dom.planMarkersLayer;
+    layer.innerHTML = '';
+
+    (this.data.halls || []).forEach((hall) => {
+      const b = this.getHallRoomBounds(hall.id);
+      (hall.hotspots || []).forEach((spot, idx) => {
+        let nodeX = b.x + (spot.mapX !== undefined ? (spot.mapX * b.w / 100) : (spot.x * b.w / 100));
+        let nodeY = b.y + (spot.mapY !== undefined ? (spot.mapY * b.h / 100) : (spot.y * b.h / 100));
+
+        nodeX = Math.max(b.x + 16, Math.min(b.x + b.w - 16, nodeX));
+        nodeY = Math.max(b.y + 24, Math.min(b.y + b.h - 16, nodeY));
+
+        const isSelected = spot.id === this.selectedVitrineId;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', `canvas-plan-node ${isSelected ? 'active' : ''}`);
+        g.setAttribute('transform', `translate(${nodeX.toFixed(1)}, ${nodeY.toFixed(1)})`);
+        g.style.cursor = 'pointer';
+
+        g.innerHTML = `
+          <circle r="13" fill="${isSelected ? '#f59e0b' : '#38bdf8'}" stroke="#ffffff" stroke-width="2"></circle>
+          <text y="4" fill="#000000" font-size="10" font-weight="700" text-anchor="middle">${idx + 1}</text>
+          <text y="24" fill="#ffffff" font-size="9" text-anchor="middle" font-weight="600">${spot.title || ''}</text>
+        `;
+
+        g.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.currentHallId = hall.id;
+          this.dom.hallSelect.value = hall.id;
+          this.selectVitrine(spot.id);
+          this.renderAdminPlanMarkers();
+        });
+
+        layer.appendChild(g);
+      });
+    });
+  }
+
+  handlePlanCanvasClick(e) {
+    if (!this.selectedVitrineId || !this.dom.adminSvgMap) return;
+
+    const svg = this.dom.adminSvgMap;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+    // Определение зала по координатам клика
+    let clickedHallId = null;
+    const hallBounds = ['college-history', 'achievements', 'region-history', 'military-glory'];
+    for (const hid of hallBounds) {
+      const b = this.getHallRoomBounds(hid);
+      if (svgP.x >= b.x && svgP.x <= b.x + b.w && svgP.y >= b.y && svgP.y <= b.y + b.h) {
+        clickedHallId = hid;
+        break;
+      }
+    }
+
+    if (!clickedHallId) return;
+
+    const b = this.getHallRoomBounds(clickedHallId);
+    const relX = Number((((svgP.x - b.x) / b.w) * 100).toFixed(1));
+    const relY = Number((((svgP.y - b.y) / b.h) * 100).toFixed(1));
+
+    let vitrine = null;
+    let oldHall = null;
+    (this.data.halls || []).forEach((h) => {
+      const found = h.hotspots?.find((v) => v.id === this.selectedVitrineId);
+      if (found) { vitrine = found; oldHall = h; }
+    });
+
+    if (!vitrine) return;
+
+    vitrine.mapX = Math.max(5, Math.min(95, relX));
+    vitrine.mapY = Math.max(8, Math.min(92, relY));
+
+    // Если витрину переместили в другую комнату
+    if (oldHall && oldHall.id !== clickedHallId) {
+      oldHall.hotspots = oldHall.hotspots.filter((v) => v.id !== vitrine.id);
+      const targetHall = this.data.halls.find((h) => h.id === clickedHallId);
+      if (targetHall) {
+        if (!targetHall.hotspots) targetHall.hotspots = [];
+        targetHall.hotspots.push(vitrine);
+      }
+      this.currentHallId = clickedHallId;
+      this.dom.hallSelect.value = clickedHallId;
+    }
+
+    this.persistData();
+    this.renderAdminPlanMarkers();
+    this.renderMarkersAndChips();
+    this.showToast('Положение витрины на плане здания сохранено', 'success');
   }
 
   addImageRow(url = '', caption = '') {
@@ -320,6 +520,8 @@ class MuseumAdmin {
         id,
         x,
         y,
+        mapX: 50.0,
+        mapY: 50.0,
         title,
         epoch,
         model3d,
@@ -333,6 +535,9 @@ class MuseumAdmin {
     this.selectedVitrineId = id;
     this.persistData();
     this.renderMarkersAndChips();
+    if (this.adminViewMode === 'building-plan') {
+      this.renderAdminPlanMarkers();
+    }
     this.showToast('✅ Витрина сохранена и обновлена в музее', 'success');
   }
 
@@ -343,9 +548,13 @@ class MuseumAdmin {
 
     hall.hotspots = hall.hotspots.filter((v) => v.id !== this.selectedVitrineId);
     this.selectedVitrineId = hall.hotspots[0]?.id || null;
+    
     this.persistData();
     this.renderMarkersAndChips();
-    this.showToast('Витрина удалена', 'info');
+    if (this.adminViewMode === 'building-plan') {
+      this.renderAdminPlanMarkers();
+    }
+    this.showToast('Витрина удалена из экспозиции и со схемы здания', 'info');
   }
 
   exportJsonFile() {
