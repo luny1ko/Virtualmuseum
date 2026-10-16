@@ -1,7 +1,8 @@
+/* styles.css */
 :root {
   --color-bg-base: #0f0f12;
   --color-bg-surface: #121218;
-  --color-glass-surface: rgba(18, 18, 24, 0.72);
+  --color-glass-surface: rgba(18, 18, 24, 0.76);
   --color-glass-border: rgba(255, 255, 255, 0.12);
   --color-glass-highlight: rgba(255, 255, 255, 0.25);
   
@@ -13,6 +14,7 @@
   
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --blur-intensity: 16px;
+  --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 *, *::before, *::after {
@@ -92,7 +94,7 @@ html, body {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   z-index: 30;
   max-width: 95vw;
 }
@@ -179,12 +181,52 @@ html, body {
   font-weight: 600;
 }
 
+/* КНОПКИ ДЕЙСТВИЙ В ШАПКЕ */
+.header-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: var(--color-glass-surface);
+  backdrop-filter: blur(var(--blur-intensity));
+  border: 1px solid var(--color-glass-border);
+  border-radius: 9999px;
+  color: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.header-action-btn:hover {
+  color: #fff;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 16px rgba(var(--color-accent-rgb), 0.3);
+  transform: translateY(-1px);
+}
+
+.header-action-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.header-btn-svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
 .status-indicator {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  width: 148px;
+  width: 130px;
   flex-shrink: 0;
   background: var(--color-glass-surface);
   backdrop-filter: blur(var(--blur-intensity));
@@ -219,8 +261,8 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   background: var(--color-glass-surface);
   backdrop-filter: blur(var(--blur-intensity));
@@ -243,7 +285,7 @@ html, body {
   height: 18px;
 }
 
-/* СЛОЙ ХОТСПОТОВ-ВИТРИН */
+/* СЛОЙ ХОТСПОТОВ НА ПАНОРАМЕ */
 .hotspots-layer {
   position: absolute;
   inset: 0;
@@ -305,7 +347,6 @@ html, body {
   box-shadow: 0 0 18px #fff;
 }
 
-/* КОНТРАСТНЫЙ ТЕКСТ ПОДСКАЗКИ */
 .hotspot-tooltip {
   position: absolute;
   bottom: calc(100% + 14px);
@@ -334,7 +375,345 @@ html, body {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ВЫДВИЖНОЙ DRAWER */
+/* МОДАЛЬНОЕ ОКНО ИНТЕРАКТИВНОЙ КАРТЫ */
+.map-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-smooth);
+}
+
+.map-modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.map-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -46%) scale(0.96);
+  width: 90vw;
+  max-width: 1040px;
+  background: rgba(18, 18, 24, 0.95);
+  backdrop-filter: blur(28px);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(var(--color-accent-rgb), 0.15);
+  border-radius: 20px;
+  z-index: 70;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--transition-smooth), opacity var(--transition-smooth);
+  overflow: hidden;
+}
+
+.map-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.map-modal-container {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 28px;
+  gap: 16px;
+}
+
+.map-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-glass-border);
+  padding-bottom: 16px;
+}
+
+.map-title-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.map-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.map-modal-title {
+  font-size: 1.3rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.map-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.map-hotkey-badge {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.map-hotkey-badge kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.map-close-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 50%;
+  color: var(--color-text-main);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.map-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.map-canvas-wrapper {
+  width: 100%;
+  background: #09090d;
+  border: 1px solid var(--color-glass-border);
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 8px;
+}
+
+.museum-svg-map {
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+  display: block;
+}
+
+/* СТИЛИЗАЦИЯ SVG КАРТЫ */
+.atrium-rect {
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-dasharray: 4 4;
+}
+
+.atrium-label {
+  fill: #64748b;
+  font-family: var(--font-main);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.atrium-sublabel {
+  fill: #475569;
+  font-family: var(--font-main);
+  font-size: 9px;
+}
+
+.compass-circle {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1.5;
+}
+
+.map-hall-group {
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.hall-polygon {
+  fill: rgba(22, 22, 30, 0.7);
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1.5;
+  transition: all 0.3s ease;
+}
+
+.hall-divider-line {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+
+.hall-svg-title {
+  fill: #e2e8f0;
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: fill 0.3s ease;
+}
+
+.hall-svg-epoch {
+  fill: var(--color-gold);
+  font-family: var(--font-main);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.map-hall-group:hover .hall-polygon {
+  fill: rgba(30, 30, 42, 0.9);
+  stroke: rgba(var(--color-accent-rgb), 0.5);
+  filter: drop-shadow(0 0 12px rgba(var(--color-accent-rgb), 0.25));
+}
+
+.map-hall-group:hover .hall-svg-title {
+  fill: #fff;
+}
+
+.map-hall-group.active .hall-polygon {
+  fill: rgba(26, 36, 52, 0.95);
+  stroke: var(--color-accent);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 18px rgba(var(--color-accent-rgb), 0.35));
+}
+
+.map-hall-group.active .hall-svg-title {
+  fill: var(--color-accent);
+}
+
+/* УЗЛЫ ВИТРИН НА КАРТЕ: анимация через радиус круга без сдвига координат группы */
+.map-vitrine-node {
+  cursor: pointer;
+}
+
+.vitrine-node-circle {
+  fill: #161622;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  transition: r 0.25s cubic-bezier(0.16, 1, 0.3, 1), fill 0.25s ease, stroke 0.25s ease;
+}
+
+.vitrine-node-idx {
+  fill: #ffffff;
+  font-family: var(--font-main);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.vitrine-node-title {
+  fill: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: fill 0.2s ease, opacity 0.2s ease;
+}
+
+/* При наведении увеличиваем только радиус круга — координаты группы остаются на месте */
+.map-vitrine-node:hover .vitrine-node-circle {
+  r: 16px;
+  fill: var(--color-accent);
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 8px var(--color-accent));
+}
+
+.map-vitrine-node:hover .vitrine-node-idx {
+  fill: #09090d;
+}
+
+.map-vitrine-node:hover .vitrine-node-title {
+  fill: #ffffff;
+  opacity: 1;
+}
+
+/* Дверные проёмы между залами на схеме */
+.hall-doorway {
+  stroke: #38bdf8;
+  stroke-width: 3;
+  stroke-dasharray: 4 4;
+  opacity: 0.8;
+}
+
+/* МАЯК «ВЫ ЗДЕСЬ» */
+.beacon-pulse-ring {
+  fill: none;
+  stroke: #10b981;
+  stroke-width: 2;
+  animation: map-beacon-wave 2s infinite ease-out;
+}
+
+.beacon-center-dot {
+  fill: #10b981;
+  filter: drop-shadow(0 0 6px #10b981);
+}
+
+.beacon-text {
+  fill: #10b981;
+  font-family: var(--font-main);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+@keyframes map-beacon-wave {
+  0% { r: 4; opacity: 1; }
+  100% { r: 16; opacity: 0; }
+}
+
+.map-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.map-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-dot.current {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.legend-dot.vitrine {
+  background: var(--color-accent);
+}
+
+.map-instructions {
+  color: var(--color-gold);
+}
+
+/* ВЫДВИЖНОЙ DRAWER ВИТРИНЫ */
 .drawer-backdrop {
   position: absolute;
   inset: 0;
@@ -381,7 +760,6 @@ html, body {
   padding: 24px 28px 32px 28px;
 }
 
-/* ВЕРХНЯЯ СТРОКА УПРАВЛЕНИЯ: КРЕСТИК И ПЕРЕКЛЮЧАТЕЛЬ */
 .drawer-header-bar {
   display: flex;
   align-items: center;
@@ -395,7 +773,7 @@ html, body {
 .drawer-close-btn {
   width: 36px;
   height: 36px;
-  margin-left: auto; /* Прижимает крестик вправо, даже если переключатель 3D скрыт */
+  margin-left: auto;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--color-glass-border);
   border-radius: 50%;
@@ -448,7 +826,6 @@ html, body {
   font-weight: 600;
 }
 
-/* МЕДИА-КОНТЕЙНЕР (РАСПОЛОЖЕН СТРОГО ПОД ШАПКОЙ) */
 .drawer-media-box {
   position: relative;
   width: 100%;
@@ -742,6 +1119,51 @@ model-viewer {
   color: var(--color-text-muted);
 }
 
+/* ==========================================================================
+   ОБЛЕГЧЁННЫЙ РЕЖИМ (LITE MODE): ОТКЛЮЧЕНИЕ ТЯЖЁЛЫХ ШЕЙДЕРОВ РАЗМЫТИЯ И ТЕНЕЙ
+   ========================================================================== */
+body.lite-mode {
+  --blur-intensity: 0px !important;
+}
+
+body.lite-mode *,
+body.lite-mode *::before,
+body.lite-mode *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+body.lite-mode .brand-badge,
+body.lite-mode .nav-capsule,
+body.lite-mode .header-action-btn,
+body.lite-mode .status-indicator,
+body.lite-mode .admin-entry-link {
+  background: #14141c !important;
+  border-color: #2e2e3e !important;
+}
+
+body.lite-mode .exhibit-drawer,
+body.lite-mode .map-modal {
+  background: #101016 !important;
+  border-color: #333344 !important;
+}
+
+body.lite-mode .hotspot-tooltip {
+  background: #101016 !important;
+}
+
+body.lite-mode .cinematic-vignette {
+  background: rgba(15, 15, 18, 0.45) !important;
+}
+
+body.lite-mode .ripple-ring {
+  animation: none !important;
+  display: none !important;
+}
+
+/* АНИМАЦИИ */
 @keyframes hotspot-pulse {
   0% { transform: scale(0.6); opacity: 1; }
   100% { transform: scale(2.4); opacity: 0; }
@@ -759,6 +1181,16 @@ model-viewer {
 @keyframes eq-bounce {
   0% { height: 20%; }
   100% { height: 100%; }
+}
+
+/* АДАПТИВНОСТЬ */
+@media (max-width: 992px) {
+  .header-btn-text {
+    display: none;
+  }
+  .header-action-btn {
+    padding: 9px 12px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -783,5 +1215,15 @@ model-viewer {
   .exhibit-drawer {
     width: 100vw;
     max-width: 100vw;
+  }
+  .map-modal {
+    width: 96vw;
+    max-width: 96vw;
+  }
+  .map-modal-container {
+    padding: 16px;
+  }
+  .map-instructions, .map-hotkey-badge {
+    display: none;
   }
 }

@@ -1,47 +1,66 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Виртуальный Музей | Интерактивная экспозиция</title>
+  <title>Виртуальный Музей ЛДПК | Интерактивная экспозиция</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Google model-viewer для аппаратного 3D рендеринга GLB/GLTF моделей -->
+  <!-- Google model-viewer для аппаратного 3D-рендеринга GLB/GLTF моделей -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 </head>
 <body>
   <div id="app" class="museum-app">
-    <!-- Фоновый видеоконтейнер и резервный слой кадра -->
+    <!-- Фоновый видеоконтейнер и резервный слой статичного кадра -->
     <div class="viewport-stage">
       <video id="hall-video" class="hall-video" autoplay muted playsinline preload="auto"></video>
       <div id="hall-bg" class="hall-bg"></div>
       <div class="cinematic-vignette"></div>
     </div>
 
-    <!-- Интерактивный слой витрин (хотспотов) -->
+    <!-- Интерактивный слой витрин (хотспотов) на панораме -->
     <div id="hotspots-layer" class="hotspots-layer" aria-label="Витрины и стенды зала"></div>
 
-    <!-- Верхняя парящая навигационная капсула -->
+    <!-- Верхняя парящая навигационная шапка -->
     <header class="navigation-header">
       <div class="brand-badge">
         <svg class="badge-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2L2 7h20L12 2z"/>
         </svg>
-        <span class="badge-title">МУЗЕЙ</span>
+        <span class="badge-title">МУЗЕЙ ЛДПК</span>
       </div>
 
       <nav class="nav-capsule" id="hall-nav" aria-label="Залы музея">
         <div class="nav-active-pill" id="nav-pill"></div>
       </nav>
 
+      <!-- Кнопка интерактивного плана залов -->
+      <button id="btn-open-map" class="header-action-btn" type="button" title="План экспозиции музея (Клавиша M)">
+        <svg class="header-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+          <line x1="8" y1="2" x2="8" y2="18"></line>
+          <line x1="16" y1="6" x2="16" y2="22"></line>
+        </svg>
+        <span class="header-btn-text">План залов</span>
+      </button>
+
+      <!-- Переключатель облегченной версии (Lite Mode) -->
+      <button id="btn-toggle-lite" class="header-action-btn" type="button" title="Переключить облегченный режим (экономия GPU)">
+        <svg class="header-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span id="lite-btn-text" class="header-btn-text">Lite</span>
+      </button>
+
       <div class="status-indicator" id="system-status" title="Статус экспозиции">
         <span class="status-dot"></span>
         <span class="status-text">Онлайн</span>
       </div>
 
-      <!-- Вход в панель управления в текущей вкладке -->
+      <!-- Вход в панель управления -->
       <a href="admin.html" class="admin-entry-link" title="Панель администратора музея">
         <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
@@ -50,20 +69,175 @@
       </a>
     </header>
 
-    <!-- Затеняющий оверлей -->
+    <!-- Всплывающая интерактивная мини-карта (Floor Plan) -->
+    <div id="map-modal-backdrop" class="map-modal-backdrop" aria-hidden="true"></div>
+    <section id="map-modal" class="map-modal" role="dialog" aria-modal="true" aria-labelledby="map-modal-heading" aria-hidden="true">
+      <div class="map-modal-container">
+        <header class="map-modal-header">
+          <div class="map-title-wrapper">
+            <span class="map-tag">Архитектурный план</span>
+            <h2 id="map-modal-heading" class="map-modal-title">Интерактивная карта музея ЛДПК</h2>
+          </div>
+          <div class="map-header-tools">
+            <span class="map-hotkey-badge">Горячая клавиша: <kbd>M</kbd></span>
+            <button id="map-close-btn" class="map-close-btn" type="button" aria-label="Закрыть план">&times;</button>
+          </div>
+        </header>
+
+        <!-- Векторный архитектурный чертёж 4 залов колледжа -->
+        <div class="map-canvas-wrapper">
+        <svg id="museum-svg-map" class="museum-svg-map" viewBox="0 0 920 600" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <pattern id="floor-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <path d="M 24 0 L 0 0 0 24" fill="none" stroke="rgba(255, 255, 255, 0.04)" stroke-width="1"/>
+              </pattern>
+            </defs>
+
+            <!-- Фоновая сетка чертежа -->
+            <rect width="100%" height="100%" fill="url(#floor-grid)" rx="16" />
+
+            <!-- ==========================================
+                 ЗАЛ 1: ИСТОРИЯ ЛДПК (Вся верхняя секция)
+                 ========================================== -->
+            <g class="map-hall-group" id="map-hall-college-history" data-hall-id="college-history" tabindex="0">
+              <rect x="40" y="30" width="840" height="190" rx="12" class="hall-polygon"/>
+              <line x1="40" y1="75" x2="880" y2="75" class="hall-divider-line"/>
+              <text x="65" y="60" class="hall-svg-title">01. ИСТОРИЯ ЛДПК</text>
+              <text x="855" y="60" class="hall-svg-epoch" text-anchor="end">1941–1990 гг.</text>
+              
+              <!-- Витрины Зала 1 -->
+              <g class="map-vitrine-node" data-hall-id="college-history" data-vitrine-id="vitrine-101" transform="translate(180, 135)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">1</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">ДКТ / ЛиДАМТ</text>
+              </g>
+              <g class="map-vitrine-node" data-hall-id="college-history" data-vitrine-id="vitrine-102" transform="translate(460, 135)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">2</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Наставники</text>
+              </g>
+              <g class="map-vitrine-node" data-hall-id="college-history" data-vitrine-id="vitrine-103" transform="translate(740, 135)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">3</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Арифмометр</text>
+              </g>
+              <g class="user-beacon-slot" id="beacon-college-history" transform="translate(65, 175)"></g>
+            </g>
+
+            <!-- Дверные проёмы из Зала 1 -->
+            <line x1="140" y1="219" x2="200" y2="219" class="hall-doorway" title="Проход между залом 1 и залом 4" />
+            <line x1="600" y1="219" x2="660" y2="219" class="hall-doorway" title="Проход между залом 1 и залом 2" />
+
+            <!-- ==========================================
+                 ЗАЛ 4: ДОСТИЖЕНИЯ ЛДПК (Левое вертикальное крыло)
+                 ========================================== -->
+            <g class="map-hall-group" id="map-hall-achievements" data-hall-id="achievements" tabindex="0">
+              <rect x="40" y="240" width="340" height="330" rx="12" class="hall-polygon"/>
+              <line x1="40" y1="285" x2="380" y2="285" class="hall-divider-line"/>
+              <text x="65" y="270" class="hall-svg-title">04. ДОСТИЖЕНИЯ</text>
+              <text x="355" y="270" class="hall-svg-epoch" text-anchor="end">2015–2025 гг.</text>
+              
+              <!-- Витрины Зала 4 -->
+              <g class="map-vitrine-node" data-hall-id="achievements" data-vitrine-id="vitrine-401" transform="translate(210, 345)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">1</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Профессионалитет</text>
+              </g>
+              <g class="map-vitrine-node" data-hall-id="achievements" data-vitrine-id="vitrine-402" transform="translate(130, 455)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">2</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Алые паруса</text>
+              </g>
+              <g class="map-vitrine-node" data-hall-id="achievements" data-vitrine-id="vitrine-403" transform="translate(280, 455)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">3</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Кубки</text>
+              </g>
+              <g class="user-beacon-slot" id="beacon-achievements" transform="translate(65, 535)"></g>
+            </g>
+
+            <!-- Дверной проход между Залом 4 и Залом 3 -->
+            <line x1="381" y1="480" x2="381" y2="530" class="hall-doorway" title="Проход между залом 4 и залом 3" />
+
+            <!-- ==========================================
+                 ЗАЛ 2: БЫТ И КУЛЬТУРА КРАЯ (Правое верхнее крыло)
+                 ========================================== -->
+            <g class="map-hall-group" id="map-hall-region-history" data-hall-id="region-history" tabindex="0">
+              <rect x="400" y="240" width="480" height="175" rx="12" class="hall-polygon"/>
+              <line x1="400" y1="285" x2="880" y2="285" class="hall-divider-line"/>
+              <text x="425" y="270" class="hall-svg-title">02. БЫТ И КУЛЬТУРА КРАЯ</text>
+              <text x="855" y="270" class="hall-svg-epoch" text-anchor="end">XIX–XX вв.</text>
+              
+              <!-- Витрины Зала 2 -->
+              <g class="map-vitrine-node" data-hall-id="region-history" data-vitrine-id="vitrine-201" transform="translate(500, 345)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">1</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Дулёвский фарфор (3D)</text>
+              </g>
+              <g class="map-vitrine-node" data-hall-id="region-history" data-vitrine-id="vitrine-202" transform="translate(660, 345)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">2</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Радиола Вега</text>
+              </g>
+              <g class="map-vitrine-node" data-hall-id="region-history" data-vitrine-id="vitrine-203" transform="translate(800, 345)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">3</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Самовар</text>
+              </g>
+              <g class="user-beacon-slot" id="beacon-region-history" transform="translate(425, 385)"></g>
+            </g>
+
+            <!-- Дверной проход между Залом 2 и Залом 3 -->
+            <line x1="600" y1="416" x2="660" y2="416" class="hall-doorway" title="Проход между залом 2 и залом 3" />
+
+            <!-- ==========================================
+                 ЗАЛ 3: ВОЕННАЯ ПАМЯТЬ (Правое нижнее крыло)
+                 ========================================== -->
+            <g class="map-hall-group" id="map-hall-military-glory" data-hall-id="military-glory" tabindex="0">
+              <rect x="400" y="435" width="480" height="135" rx="12" class="hall-polygon"/>
+              <line x1="400" y1="475" x2="880" y2="475" class="hall-divider-line"/>
+              <text x="425" y="460" class="hall-svg-title">03. ВОЕННАЯ ПАМЯТЬ</text>
+              <text x="855" y="460" class="hall-svg-epoch" text-anchor="end">1941–1945 гг.</text>
+              
+              <!-- Витрины Зала 3 -->
+              <g class="map-vitrine-node" data-hall-id="military-glory" data-vitrine-id="vitrine-301" transform="translate(530, 515)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">1</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Книга Памяти</text>
+              </g>
+              <g class="map-vitrine-node" data-hall-id="military-glory" data-vitrine-id="vitrine-302" transform="translate(730, 515)">
+                <circle r="12" class="vitrine-node-circle"/>
+                <text y="4" class="vitrine-node-idx" text-anchor="middle">2</text>
+                <text y="28" class="vitrine-node-title" text-anchor="middle">Труд в тылу</text>
+              </g>
+              <g class="user-beacon-slot" id="beacon-military-glory" transform="translate(425, 545)"></g>
+            </g>
+          </svg>
+        </div>
+
+        <footer class="map-modal-footer">
+          <div class="map-legend">
+            <span class="legend-item"><span class="legend-dot current"></span> Текущее местоположение</span>
+            <span class="legend-item"><span class="legend-dot vitrine"></span> Интерактивная витрина (клик открывает стенд)</span>
+          </div>
+          <p class="map-instructions">Нажмите на любой зал для телепортации или выберите нужный стенд на плане</p>
+        </footer>
+      </div>
+    </section>
+
+    <!-- Затеняющий оверлей шторки витрины -->
     <div id="drawer-backdrop" class="drawer-backdrop"></div>
 
     <!-- Выдвижная информационная панель витрины (Drawer) -->
     <aside id="exhibit-drawer" class="exhibit-drawer" aria-hidden="true" role="dialog" aria-labelledby="drawer-title">
       <div class="drawer-content">
-        
-        <!-- Выделенная верхняя панель (крестик больше никогда не наползает на фото) -->
+        <!-- Верхняя полоса управления -->
         <div class="drawer-header-bar">
           <div id="media-mode-toggle" class="media-mode-toggle hidden">
             <button type="button" class="mode-btn active" id="btn-mode-3d">🧊 3D Модель</button>
             <button type="button" class="mode-btn" id="btn-mode-gallery">🖼 Галерея</button>
           </div>
-          <button id="drawer-close" class="drawer-close-btn" aria-label="Закрыть панель">&times;</button>
+          <button id="drawer-close" class="drawer-close-btn" type="button" aria-label="Закрыть панель">&times;</button>
         </div>
 
         <!-- Медиа-контейнер витрины -->
@@ -84,8 +258,8 @@
               <img id="gallery-current-img" src="" alt="Экспонат витрины" class="drawer-media-img">
             </div>
 
-            <button id="gallery-prev" class="gallery-nav-btn prev" aria-label="Предыдущее фото">&#10094;</button>
-            <button id="gallery-next" class="gallery-nav-btn next" aria-label="Следующее фото">&#10095;</button>
+            <button id="gallery-prev" class="gallery-nav-btn prev" type="button" aria-label="Предыдущее фото">&#10094;</button>
+            <button id="gallery-next" class="gallery-nav-btn next" type="button" aria-label="Следующее фото">&#10095;</button>
 
             <div class="gallery-caption-bar">
               <span id="gallery-caption-text" class="gallery-caption-text"></span>
@@ -101,7 +275,6 @@
         <div class="drawer-body">
           <h2 id="drawer-title" class="drawer-title"></h2>
           <div class="drawer-divider"></div>
-          
           <div id="drawer-extra-info" class="drawer-extra-info"></div>
           <p id="drawer-description" class="drawer-description"></p>
         </div>

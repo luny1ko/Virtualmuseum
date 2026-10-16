@@ -3,7 +3,7 @@
     {
       "id": "college-history",
       "name": "История ЛДПК",
-      "bgImage": "assets/images/hall1_static.jpg",
+      "bgImage": "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1920&q=80",
       "videoTransition": "assets/videos/to_hall1.mp4",
       "hotspots": [
         {
@@ -78,7 +78,7 @@
     {
       "id": "region-history",
       "name": "Быт и культура края",
-      "bgImage": "assets/images/hall2_static.jpg",
+      "bgImage": "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1920&q=80",
       "videoTransition": "assets/videos/to_hall2.mp4",
       "hotspots": [
         {
@@ -88,14 +88,14 @@
           "x": 32.0,
           "y": 50.0,
           "description": "Коллекция знаменитого фарфора: изделия заводов Гарднера и Товарищества М. С. Кузнецова. Парадные сервизы с тончайшей ручной росписью, золочением и сюжетными миниатюрами.",
-          "model3d": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/AntiqueCamera/glTF-Binary/AntiqueCamera.glb",
+          "model3d": "https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/AntiqueCamera/glTF-Binary/AntiqueCamera.glb",
           "images": [
             {
-              "url": "assets/images/hall2_exp1_1.jpg",
-              "caption": "Сервиз Товарищества М. С. Кузнецова (1881 год)"
+              "url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1000&q=80",
+              "caption": "Сервиз Товарищества М. С. Кузнецова с ручной росписью"
             },
             {
-              "url": "assets/images/hall2_exp1_2.jpg",
+              "url": "https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=1000&q=80",
               "caption": "Фарфор завода Гарднера с позолотой"
             }
           ],
@@ -152,7 +152,7 @@
     {
       "id": "military-glory",
       "name": "Военная память",
-      "bgImage": "assets/images/hall3_static.jpg",
+      "bgImage": "https://images.unsplash.com/photo-1572953109213-3be62398eb95?auto=format&fit=crop&w=1920&q=80",
       "videoTransition": "assets/videos/to_hall3.mp4",
       "hotspots": [
         {
@@ -198,7 +198,7 @@
     {
       "id": "achievements",
       "name": "Достижения колледжа",
-      "bgImage": "assets/images/hall4_static.jpg",
+      "bgImage": "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1920&q=80",
       "videoTransition": "assets/videos/to_hall4.mp4",
       "hotspots": [
         {

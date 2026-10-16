@@ -1,7 +1,8 @@
+// app.js
 /**
- * Архитектурный класс "Виртуальный музей"
- * Безотказный жизненный цикл 3D-моделей, выделенная шапка панели,
- * синхронизация через localStorage, строгие видеопереходы и аудиогид.
+ * Архитектурный класс "Виртуальный музей ЛДПК"
+ * Включает: векторный интерактивный план залов (Floor Plan), тумблер Lite Mode (экономия GPU),
+ * безопасное управление 3D-моделями без сброса WebGL-контекста, аудиогид и сквозной переход к стендам.
  */
 class MuseumApp {
   constructor() {
@@ -14,6 +15,8 @@ class MuseumApp {
 
     this.currentSpot = null;
     this.currentImageIndex = 0;
+    this.isMapOpen = false;
+    this.isLiteMode = false;
 
     this.dom = {
       nav: document.getElementById('hall-nav'),
@@ -24,6 +27,18 @@ class MuseumApp {
       statusBadge: document.getElementById('system-status'),
       loader: document.getElementById('transition-loader'),
       
+      // Кнопки шапки
+      btnOpenMap: document.getElementById('btn-open-map'),
+      btnToggleLite: document.getElementById('btn-toggle-lite'),
+      liteBtnText: document.getElementById('lite-btn-text'),
+
+      // Интерактивная мини-карта залов
+      mapModal: document.getElementById('map-modal'),
+      mapBackdrop: document.getElementById('map-modal-backdrop'),
+      mapCloseBtn: document.getElementById('map-close-btn'),
+      svgMap: document.getElementById('museum-svg-map'),
+
+      // Выдвижная информационная панель витрины (Drawer)
       drawer: document.getElementById('exhibit-drawer'),
       drawerBackdrop: document.getElementById('drawer-backdrop'),
       drawerCloseBtn: document.getElementById('drawer-close'),
@@ -53,18 +68,67 @@ class MuseumApp {
   }
 
   async init() {
+    this.initLiteModeState();
     this.bindEvents();
     this.initSpeechSynth();
     await this.loadExhibitsData('exhibits.json');
   }
 
+  /**
+   * Инициализация облегчённого режима на основе сохранённых предпочтений
+   */
+  initLiteModeState() {
+    const saved = localStorage.getItem('museum_lite_mode');
+    this.isLiteMode = saved === 'true';
+    this.applyLiteMode(this.isLiteMode);
+  }
+
+  applyLiteMode(active) {
+    this.isLiteMode = active;
+    document.body.classList.toggle('lite-mode', active);
+    this.dom.btnToggleLite.classList.toggle('active', active);
+    this.dom.liteBtnText.textContent = active ? 'Lite (Вкл)' : 'Lite';
+    localStorage.setItem('museum_lite_mode', active.toString());
+  }
+
+  toggleLiteMode() {
+    this.applyLiteMode(!this.isLiteMode);
+  }
+
   bindEvents() {
+    // Управление шторкой витрины (Drawer)
     this.dom.drawerCloseBtn.addEventListener('click', () => this.closeDrawer());
     this.dom.drawerBackdrop.addEventListener('click', () => this.closeDrawer());
 
+    // Управление интерактивной картой
+    this.dom.btnOpenMap.addEventListener('click', () => this.toggleMap());
+    this.dom.mapCloseBtn.addEventListener('click', () => this.closeMap());
+    this.dom.mapBackdrop.addEventListener('click', () => this.closeMap());
+
+    // Переключение Lite Mode
+    this.dom.btnToggleLite.addEventListener('click', () => this.toggleLiteMode());
+
+    // Горячие клавиши (M - карта, Esc - закрытие, Стрелки - галерея)
     window.addEventListener('keydown', (event) => {
+      if (event.key === 'm' || event.key === 'M' || event.key === 'ь' || event.key === 'Ь') {
+        const isEditing = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
+        if (!isEditing) {
+          event.preventDefault();
+          this.toggleMap();
+        }
+      }
+
+      if (event.key === 'Escape') {
+        if (this.isMapOpen) {
+          this.closeMap();
+          return;
+        }
+        if (this.dom.drawer.classList.contains('active')) {
+          this.closeDrawer();
+        }
+      }
+
       if (this.dom.drawer.classList.contains('active')) {
-        if (event.key === 'Escape') this.closeDrawer();
         if (event.key === 'ArrowLeft') this.prevImage();
         if (event.key === 'ArrowRight') this.nextImage();
       }
@@ -85,6 +149,99 @@ class MuseumApp {
 
     this.dom.audioBtn.addEventListener('click', () => this.toggleAudioguide());
     this.dom.video.addEventListener('error', (e) => this.handleVideoError(e));
+
+    this.bindSvgMapEvents();
+  }
+
+  /**
+   * Привязка кликов к векторным зонам залов и маркерам витрин на SVG-плане
+   */
+  bindSvgMapEvents() {
+    const hallGroups = document.querySelectorAll('.map-hall-group');
+    hallGroups.forEach((group) => {
+      group.addEventListener('click', (e) => {
+        // Если кликнули непосредственно по витрине внутри зала — не перебиваем обработку витрины
+        if (e.target.closest('.map-vitrine-node')) return;
+        const hallId = group.getAttribute('data-hall-id');
+        if (hallId && hallId !== this.currentHall?.id) {
+          this.closeMap();
+          this.switchHall(hallId);
+        }
+      });
+    });
+
+    const vitrineNodes = document.querySelectorAll('.map-vitrine-node');
+    vitrineNodes.forEach((node) => {
+      node.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const hallId = node.getAttribute('data-hall-id');
+        const vitrineId = node.getAttribute('data-vitrine-id');
+        this.teleportToVitrine(hallId, vitrineId);
+      });
+    });
+  }
+
+  /**
+   * Сквозная телепортация: перелёт в зал и мгновенное открытие нужной витрины
+   */
+  async teleportToVitrine(hallId, vitrineId) {
+    this.closeMap();
+    if (this.currentHall?.id !== hallId) {
+      await this.switchHall(hallId, vitrineId);
+    } else {
+      const spot = this.currentHall.hotspots?.find((s) => s.id === vitrineId);
+      if (spot) {
+        this.openVitrineDrawer(spot);
+      }
+    }
+  }
+
+  toggleMap() {
+    if (this.isMapOpen) {
+      this.closeMap();
+    } else {
+      this.openMap();
+    }
+  }
+
+  openMap() {
+    this.isMapOpen = true;
+    this.updateSvgMapVisuals();
+    this.dom.mapBackdrop.classList.add('active');
+    this.dom.mapModal.classList.add('active');
+    this.dom.btnOpenMap.classList.add('active');
+  }
+
+  closeMap() {
+    this.isMapOpen = false;
+    this.dom.mapModal.classList.remove('active');
+    this.dom.mapBackdrop.classList.remove('active');
+    this.dom.btnOpenMap.classList.remove('active');
+  }
+
+  /**
+   * Отрисовка геопозиции "Вы здесь" (радар) на карте залов
+   */
+  updateSvgMapVisuals() {
+    if (!this.currentHall) return;
+
+    // Сбрасываем активные залы
+    document.querySelectorAll('.map-hall-group').forEach((g) => g.classList.remove('active'));
+    document.querySelectorAll('.user-beacon-slot').forEach((slot) => { slot.innerHTML = ''; });
+
+    const activeGroup = document.getElementById(`map-hall-${this.currentHall.id}`);
+    if (activeGroup) {
+      activeGroup.classList.add('active');
+    }
+
+    const beaconSlot = document.getElementById(`beacon-${this.currentHall.id}`);
+    if (beaconSlot) {
+      beaconSlot.innerHTML = `
+        <circle cx="0" cy="0" r="10" class="beacon-pulse-ring"/>
+        <circle cx="0" cy="0" r="5" class="beacon-center-dot"/>
+        <text x="14" y="4" class="beacon-text">ВЫ ЗДЕСЬ</text>
+      `;
+    }
   }
 
   initSpeechSynth() {
@@ -115,7 +272,7 @@ class MuseumApp {
         this.setStatus('Онлайн', false);
         return;
       } catch (err) {
-        console.warn('Ошибка чтения кэша, читаем файл...');
+        console.warn('Ошибка чтения кэша, запрашиваем файл...');
       }
     }
 
@@ -167,7 +324,7 @@ class MuseumApp {
     this.dom.navPill.style.opacity = '1';
   }
 
-  async switchHall(hallId) {
+  async switchHall(hallId, targetVitrineId = null) {
     const targetHall = this.data.halls.find((h) => h.id === hallId);
     if (!targetHall || this.isTransitioning) return;
 
@@ -177,7 +334,7 @@ class MuseumApp {
     this.updateNavButtons(hallId);
 
     this.dom.hotspotsLayer.classList.add('hidden');
-    await this.delay(300);
+    await this.delay(200);
 
     const video = this.dom.video;
     const bg = this.dom.bgLayer;
@@ -191,8 +348,14 @@ class MuseumApp {
         bg.classList.add('active');
       }
       this.dom.loader.classList.remove('visible');
-      this.finishHallTransition(targetHall);
+      this.finishHallTransition(targetHall, targetVitrineId);
     };
+
+    // В облегчённом режиме (Lite Mode) видеопролёт пропускается для мгновенной отрисовки без нагрузки
+    if (this.isLiteMode) {
+      executeStaticFallback();
+      return;
+    }
 
     if (targetHall.videoTransition) {
       video.src = targetHall.videoTransition;
@@ -212,7 +375,7 @@ class MuseumApp {
         }
 
         this.dom.loader.classList.remove('visible');
-        this.finishHallTransition(targetHall);
+        this.finishHallTransition(targetHall, targetVitrineId);
       };
 
       video.oncanplay = () => {
@@ -229,13 +392,23 @@ class MuseumApp {
     }
   }
 
-  finishHallTransition(hall) {
+  finishHallTransition(hall, targetVitrineId = null) {
     this.currentHall = hall;
     this.renderHotspots(hall.hotspots || []);
+    this.updateSvgMapVisuals();
+
     setTimeout(() => {
       this.dom.hotspotsLayer.classList.remove('hidden');
       this.isTransitioning = false;
       this.setStatus('Онлайн', false);
+
+      // Если переход был вызван по ссылке на витрину из карты — открываем её
+      if (targetVitrineId) {
+        const spot = hall.hotspots?.find((s) => s.id === targetVitrineId);
+        if (spot) {
+          this.openVitrineDrawer(spot);
+        }
+      }
     }, 150);
   }
 
@@ -276,6 +449,7 @@ class MuseumApp {
     const has3D = Boolean(spot.model3d && spot.model3d.trim() !== '');
     const hasImages = Boolean(spot.images && spot.images.length > 0);
 
+    // Управление тумблером режимов
     if (has3D && hasImages) {
       this.dom.mediaModeToggle.classList.remove('hidden');
       this.setMediaMode('3d');
@@ -287,13 +461,12 @@ class MuseumApp {
       this.setMediaMode('gallery');
     }
 
-    // Безотказное подключение 3D-модели без сброса WebGL контекста
+    // Безотказный запуск 3D через model-viewer
     if (has3D) {
-      if (this.dom.modelViewer.getAttribute('src') !== spot.model3d) {
-        this.dom.modelViewer.setAttribute('src', spot.model3d);
-      }
+      this.dom.modelViewer.src = spot.model3d;
       this.dom.modelViewer.setAttribute('camera-controls', '');
       this.dom.modelViewer.setAttribute('auto-rotate', '');
+      this.dom.modelViewer.setAttribute('reveal', 'auto');
       if (typeof this.dom.modelViewer.play === 'function') {
         this.dom.modelViewer.play();
       }
@@ -313,7 +486,6 @@ class MuseumApp {
       this.dom.btnModeGallery.classList.remove('active');
       this.dom.modelWrapper.classList.remove('hidden');
       this.dom.galleryWrapper.classList.add('hidden');
-      // Обновляем состояние управления 3D
       if (this.dom.modelViewer) {
         this.dom.modelViewer.setAttribute('camera-controls', '');
         this.dom.modelViewer.setAttribute('auto-rotate', '');
@@ -351,9 +523,11 @@ class MuseumApp {
     }
 
     const current = images[this.currentImageIndex];
+    this.dom.galleryImg.onerror = () => {
+      this.dom.galleryImg.src = 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80';
+    };
     this.dom.galleryImg.src = current.url;
     this.dom.galleryCaption.textContent = current.caption || '';
-    this.dom.galleryCounter.textContent = `${this.currentImageIndex + 1} / ${images.length}`;
 
     const showControls = images.length > 1;
     this.dom.galleryPrev.style.display = showControls ? 'flex' : 'none';
@@ -393,7 +567,6 @@ class MuseumApp {
     this.dom.drawerBackdrop.classList.remove('active');
     this.dom.drawer.setAttribute('aria-hidden', 'true');
 
-    // Корректное освобождение ресурсов 3D без разрушения URL-состояния
     if (this.dom.modelViewer) {
       this.dom.modelViewer.removeAttribute('auto-rotate');
       if (typeof this.dom.modelViewer.pause === 'function') {
@@ -469,7 +642,7 @@ class MuseumApp {
     this.dom.statusBadge.classList.toggle('loading', isLoading);
   }
 
-  handleVideoError(error) {}
+  handleVideoError() {}
 
   escapeHtml(string) {
     const div = document.createElement('div');
@@ -486,9 +659,9 @@ class MuseumApp {
       halls: [
         {
           id: "college-history",
-          name: "История колледжа",
-          bgImage: "https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=1920&q=80",
-          videoTransition: "assets/videos/to_college_history.mp4",
+          name: "История ЛДПК",
+          bgImage: "assets/images/hall1_static.jpg",
+          videoTransition: "assets/videos/to_hall1.mp4",
           hotspots: []
         }
       ]
