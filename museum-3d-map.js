@@ -1096,7 +1096,7 @@ export class ChronoArchiveHub {
           </div>
           <h3 class="card-title">${this.app.escapeHtml(spot.title)}</h3>
           <p class="card-desc">${this.app.escapeHtml(spot.description || '')}</p>
-          ${extraTags ? `<div class="card-meta-pills">\${extraTags}</div>` : ''}
+          ${extraTags ? `<div class="card-meta-pills">${extraTags}</div>` : ''}
           <div class="card-action-btn">Открыть витрину в зале →</div>
         </div>
       `;
@@ -1286,9 +1286,9 @@ export class QuizBattleHUD {
 
       <div class="quiz-options-list">
         ${currentQ.options.map((opt, i) => `
-          <button type="button" class="quiz-option-btn battle-opt-btn" data-opt-idx="\${i}">
-            <span class="opt-key-index">0\${i + 1}</span>
-            <span>\${this.app.escapeHtml(opt)}</span>
+          <button type="button" class="quiz-option-btn battle-opt-btn" data-opt-idx="${i}">
+            <span class="opt-key-index">0${i + 1}</span>
+            <span>${this.app.escapeHtml(opt)}</span>
           </button>
         `).join('')}
       </div>

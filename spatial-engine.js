@@ -163,7 +163,7 @@ export class HoloTiltEngine {
       currentOpacity: 0
     };
 
-    el.addEventListener('pointer move', (e) => this.handlePointerMove(e, state));
+    el.addEventListener('pointermove', (e) => this.handlePointerMove(e, state));
     el.addEventListener('mousemove', (e) => this.handlePointerMove(e, state), { passive: true });
     el.addEventListener('mouseenter', () => {
       if (document.body.classList.contains('lite-mode')) return;
