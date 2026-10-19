@@ -9,6 +9,9 @@
  * 5. Аппаратный 3D-просмотр GLB/GLTF моделей без сброса WebGL-контекста.
  * 6. Аудиогид на базе Web Speech API.
  */
+import { initMuseumVFX } from './vfx-engine.js';
+import { initSpatialEngine } from './spatial-engine.js';
+import { initDigitalTwinAndScanner } from './museum-3d-map.js';
 class MuseumApp {
   constructor() {
     this.data = { halls: [] };
@@ -1037,5 +1040,8 @@ class MuseumApp {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  new MuseumApp();
+  initMuseumVFX();
+  const app = new MuseumApp();
+  initSpatialEngine(app);
+  initDigitalTwinAndScanner(app); // Подключает Three.js 3D-карту и X-Ray Сканер витрин
 });

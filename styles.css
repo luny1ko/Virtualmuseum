@@ -1865,3 +1865,1426 @@ body.lite-mode .quiz-explanation-box {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   МОДУЛЬ 1: АТМОСФЕРНЫЙ СЛОЙ ЧАСТИЦ (AMBIENT DUST STAGE)
+   ========================================================================== */
+.ambient-dust-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3; /* Поверх панорамы (1) и виньетки (2), но под хотспотами (10) */
+  transition: opacity 0.6s ease;
+}
+
+body.lite-mode .ambient-dust-canvas {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* ==========================================================================
+   МОДУЛЬ 2: КИНОШНЫЙ ИНТРО-ПРЕЛОАДЕР ВРЕМЕНИ (TIME-VAULT PRELOADER)
+   ========================================================================== */
+.vault-preloader {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Кинематографичные шторки (Letterbox / Iris Split) */
+.vault-shutter {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50.5%;
+  background: radial-gradient(circle at 50% 50%, #15151e 0%, var(--color-bg-base) 100%);
+  z-index: 1;
+  transition: transform 1.05s cubic-bezier(0.77, 0, 0.175, 1);
+  will-change: transform;
+}
+
+.vault-shutter-top {
+  top: 0;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.vault-shutter-bottom {
+  bottom: 0;
+  border-top: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.vault-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 36px 36px;
+  pointer-events: none;
+}
+
+/* Лазерная линия стыка шторок */
+.vault-laser-seam {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scaleX(0);
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-accent) 25%, #ffffff 50%, var(--color-gold) 75%, transparent 100%);
+  box-shadow: 0 0 25px var(--color-accent), 0 0 45px var(--color-gold);
+  z-index: 2;
+  opacity: 0;
+  transition: transform 0.45s ease, opacity 0.45s ease;
+}
+
+.vault-preloader.vault-ready .vault-laser-seam {
+  transform: translate(-50%, -50%) scaleX(0.85);
+  opacity: 0.65;
+}
+
+/* Состояние открытия шторок */
+.vault-preloader.vault-opening {
+  pointer-events: none;
+}
+
+.vault-preloader.vault-opening .vault-laser-seam {
+  transform: translate(-50%, -50%) scaleX(1);
+  height: 4px;
+  opacity: 1;
+  transition: opacity 0.3s ease 0.2s, transform 0.25s ease;
+}
+
+.vault-preloader.vault-opening .vault-shutter-top {
+  transform: translateY(-102%);
+}
+
+.vault-preloader.vault-opening .vault-shutter-bottom {
+  transform: translateY(102%);
+}
+
+.vault-preloader.vault-opening .vault-hud-card {
+  opacity: 0;
+  transform: scale(1.08);
+  filter: blur(10px);
+}
+
+.vault-preloader.vault-opening .vault-laser-seam {
+  opacity: 0;
+}
+
+/* Центральная HUD-капсула из темного стекла */
+.vault-hud-card {
+  position: relative;
+  z-index: 3;
+  width: 92vw;
+  max-width: 620px;
+  padding: 32px 36px;
+  background: rgba(18, 18, 24, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(56, 189, 248, 0.12);
+  transition: opacity 0.45s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+}
+
+/* Декоративные угловые скобки видоискателя */
+.hud-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--color-accent);
+  border-style: solid;
+  pointer-events: none;
+}
+.hud-corner.tl { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
+.hud-corner.tr { top: 10px; right: 10px; border-width: 2px 2px 0 0; }
+.hud-corner.bl { bottom: 10px; left: 10px; border-width: 0 0 2px 2px; border-color: var(--color-gold); }
+.hud-corner.br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; border-color: var(--color-gold); }
+
+.vault-hud-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 14px;
+}
+
+.vault-coords {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+
+.coords-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 8px var(--color-accent);
+  animation: blink 1s infinite alternate;
+}
+
+.vault-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  color: var(--color-accent);
+  font-family: var(--font-main);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vault-sound-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--color-accent);
+}
+
+.vault-sound-btn.muted {
+  color: var(--color-text-muted);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.vault-data-stream {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  font-family: monospace;
+  color: var(--color-gold);
+  letter-spacing: 0.08em;
+  margin-bottom: 18px;
+}
+
+.stream-bars {
+  display: inline-flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 12px;
+}
+
+.stream-bars i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: var(--color-accent);
+  opacity: 0.7;
+  animation: eq-bounce 0.6s infinite ease-in-out alternate;
+}
+.stream-bars i:nth-child(2) { animation-delay: 0.1s; }
+.stream-bars i:nth-child(3) { animation-delay: 0.25s; background: var(--color-gold); }
+.stream-bars i:nth-child(4) { animation-delay: 0.4s; }
+.stream-bars i:nth-child(5) { animation-delay: 0.15s; background: var(--color-gold); }
+.stream-bars i:nth-child(6) { animation-delay: 0.35s; }
+
+/* Крупный счетчик эпохи */
+.vault-year-display {
+  text-align: center;
+  padding: 12px 0 22px 0;
+}
+
+.year-sub-caption {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.year-digits-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+}
+
+.vault-year-number {
+  font-size: clamp(3.6rem, 8vw, 5.4rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #ffffff 0%, var(--color-accent) 55%, var(--color-gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.28));
+}
+
+.vault-year-suffix {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--color-gold);
+}
+
+.vault-milestone-text {
+  margin-top: 12px;
+  min-height: 2.6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  line-height: 1.4;
+}
+
+/* Прогресс-бар */
+.vault-progress-section {
+  margin-bottom: 24px;
+}
+
+.vault-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.vault-percent-value {
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.vault-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vault-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-gold) 100%);
+  box-shadow: 0 0 14px var(--color-accent);
+  transition: width 0.08s linear;
+}
+
+/* Кнопка «ВОЙТИ В ЭКСПОЗИЦИЮ» */
+.vault-action-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.vault-enter-btn {
+  position: relative;
+  width: 100%;
+  padding: 15px 28px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: not-allowed;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vault-enter-btn.ready {
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(212, 175, 55, 0.22) 100%);
+  border-color: var(--color-accent);
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+.vault-enter-btn.ready:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.38) 0%, rgba(212, 175, 55, 0.35) 100%);
+  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.45), 0 0 20px rgba(212, 175, 55, 0.35);
+}
+
+.vault-skip-hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.vault-skip-hint kbd {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #fff;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 600px) {
+  .vault-hud-card {
+    padding: 22px 20px;
+  }
+  .vault-progress-labels span:first-child {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   1. ДИНАМИЧЕСКИЙ АМБИЕНТ И СВЕТОВАЯ ДНК ЗАЛОВ (DYNAMIC THEME ENGINE)
+   ========================================================================== */
+:root {
+  --hall-primary: #d97706;
+  --hall-primary-rgb: 217, 119, 6;
+  --accent-glow: rgba(251, 191, 36, 0.45);
+  --ambient-shadow: rgba(217, 119, 6, 0.32);
+}
+
+/* Динамическое окрашивание фоновой виньетки под световую ДНК зала */
+.cinematic-vignette {
+  background: 
+    radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0) 38%, var(--ambient-shadow) 82%, rgba(15, 15, 18, 0.92) 100%),
+    linear-gradient(to bottom, rgba(15, 15, 18, 0.72) 0%, transparent 18%, transparent 82%, rgba(15, 15, 18, 0.88) 100%);
+  transition: background 0.8s ease;
+}
+
+/* Mягкое свечение навигационной шапки и капсулы активного зала */
+.brand-badge,
+.nav-capsule,
+.header-action-btn,
+.status-indicator,
+.admin-entry-link {
+  border-color: rgba(var(--color-accent-rgb), 0.22);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), 0 0 24px -6px var(--ambient-shadow);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.25s ease, background 0.25s ease;
+}
+
+.nav-active-pill {
+  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.28) 0%, rgba(var(--hall-primary-rgb), 0.14) 100%);
+  border-color: rgba(var(--color-accent-rgb), 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 20px var(--accent-glow), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+/* Динамический свет маяков витрин на панораме */
+.hotspot-beacon .core-dot {
+  background-color: var(--color-accent);
+  box-shadow: 0 0 16px var(--color-accent), 0 0 28px var(--hall-primary);
+}
+
+.hotspot-beacon .ripple-ring {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Состояние кнопки Mute SFX */
+.header-action-btn.sfx-muted .sfx-wave {
+  opacity: 0.2;
+}
+
+/* ==========================================================================
+   2. ФИЗИЧЕСКИЙ 3D TILT И ИНТЕРАКТИВНЫЙ ГОЛОГРАФИЧЕСКИЙ ГЛЯНЕЦ
+   ========================================================================== */
+.holo-tilt-surface {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.holo-specular-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 25;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 0.25s ease;
+}
+
+body.lite-mode .holo-specular-sheen {
+  display: none !important;
+}
+
+/* ==========================================================================
+   3. ИЗОМЕТРИЧЕСКИЙ 3D АРХИТЕКТУРНЫЙ ПЛАН ЗДАНИЯ (ISOMETRIC BLUEPRINT)
+   ========================================================================== */
+.map-canvas-wrapper.iso-blueprint-stage {
+  perspective: 1300px;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(var(--color-accent-rgb), 0.09) 0%, #07070b 75%);
+  position: relative;
+  overflow: hidden;
+}
+
+.map-canvas-wrapper.iso-blueprint-stage.iso-active .museum-svg-map {
+  transform: rotateX(52deg) rotateZ(-28deg) scale(0.92);
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(-18px 26px 28px rgba(0, 0, 0, 0.85))
+          drop-shadow(0 0 22px var(--ambient-shadow));
+  overflow: visible;
+}
+
+/* Псевдо-объемные 3D стены комнат */
+.iso-walls-group {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.map-canvas-wrapper.iso-active .iso-walls-group {
+  opacity: 1;
+}
+
+.iso-wall-south {
+  fill: rgba(30, 41, 59, 0.65);
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 1;
+  transition: fill 0.35s ease, stroke 0.35s ease;
+}
+
+.iso-wall-east {
+  fill: rgba(15, 23, 42, 0.82);
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1;
+  transition: fill 0.35s ease, stroke 0.35s ease;
+}
+
+.iso-roof-rim {
+  fill: rgba(255, 255, 255, 0.02);
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1.2;
+  stroke-dasharray: 6 3;
+  transition: all 0.35s ease;
+}
+
+/* Свечение объемных стен выбранного или наведенного зала */
+.map-hall-group:hover .iso-wall-south,
+.map-hall-group.active .iso-wall-south {
+  fill: rgba(var(--color-accent-rgb), 0.28);
+  stroke: var(--color-accent);
+}
+
+.map-hall-group:hover .iso-wall-east,
+.map-hall-group.active .iso-wall-east {
+  fill: rgba(var(--hall-primary-rgb), 0.38);
+  stroke: var(--color-accent);
+}
+
+.map-hall-group.active .iso-roof-rim {
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-dasharray: none;
+  fill: rgba(var(--color-accent-rgb), 0.06);
+  filter: drop-shadow(0 0 12px var(--color-accent));
+}
+
+/* Парящие 3D-маяки над витринами на изометрическом плане */
+.iso-vitrine-wave {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  animation: iso-sonar-pulse 2.2s infinite ease-out;
+  pointer-events: none;
+}
+
+.iso-vitrine-stem {
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.map-canvas-wrapper.iso-active .iso-vitrine-stem {
+  opacity: 0.85;
+}
+
+.iso-vitrine-cap {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.map-canvas-wrapper:not(.iso-active) .iso-vitrine-cap {
+  transform: translate(0, 0) !important;
+}
+
+.map-vitrine-node:hover .iso-vitrine-cap {
+  filter: drop-shadow(0 0 12px var(--color-accent));
+}
+
+@keyframes iso-sonar-pulse {
+  0% { r: 8px; opacity: 0.9; }
+  100% { r: 24px; opacity: 0; }
+}
+
+/* ==========================================================================
+   THREE.JS DIGITAL TWIN 3D MAP СЦЕНА
+   ========================================================================== */
+.map-canvas-wrapper.digital-twin-stage {
+  position: relative;
+  min-height: 480px;
+  height: 58vh;
+  padding: 0;
+  background: radial-gradient(circle at 50% 45%, #131826 0%, #07070c 85%);
+}
+
+.three-map-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.three-map-host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
+
+.three-reset-cam-btn {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 10;
+  padding: 7px 14px;
+  background: rgba(15, 15, 22, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 8px;
+  color: var(--color-text-main);
+  font-family: var(--font-main);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.three-reset-cam-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.three-vitrine-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  background: rgba(12, 12, 18, 0.94);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 18px rgba(var(--color-accent-rgb), 0.35);
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.three-vitrine-tooltip.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.three-vitrine-tooltip .tt-hall {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.three-vitrine-tooltip .tt-title {
+  font-size: 0.85rem;
+  color: #ffffff;
+}
+
+.three-vitrine-tooltip .tt-epoch {
+  font-size: 0.7rem;
+  color: var(--color-gold);
+}
+
+/* ==========================================================================
+   МОДУЛЬ 3: ГОЛОГРАФИЧЕСКИЙ СКАНЕР ЭКСПОНАТА (X-RAY HOLOGRAM INSPECTOR)
+   ========================================================================== */
+.xray-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 9999px;
+  color: #e2e8f0;
+  font-family: var(--font-main);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.xray-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--color-accent);
+}
+
+.xray-toggle-btn.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.4);
+}
+
+.xray-led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 6px var(--color-accent);
+}
+
+.xray-toggle-btn.active .xray-led {
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: blink 0.6s infinite alternate;
+}
+
+/* Голографический фильтр на 3D-модель и фото при включенном Рентгене */
+.drawer-media-box.xray-mode-active model-viewer,
+.drawer-media-box.xray-mode-active .drawer-media-img {
+  filter: contrast(1.22) brightness(1.08) hue-rotate(155deg) saturate(1.6) drop-shadow(0 0 16px rgba(56, 189, 248, 0.55));
+  transition: filter 0.45s ease;
+}
+
+.xray-hologram-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity 0.35s ease;
+}
+
+.xray-hologram-overlay.active {
+  opacity: 1;
+}
+
+.xray-grid-mesh {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mix-blend-mode: screen;
+}
+
+.xray-scanline-laser {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 36px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(56, 189, 248, 0.35) 85%, #38bdf8 100%);
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.8);
+  animation: xray-laser-sweep 3.2s linear infinite;
+}
+
+@keyframes xray-laser-sweep {
+  0% { top: -40px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.xray-telemetry-hud {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: monospace;
+  font-size: 0.65rem;
+  color: #38bdf8;
+  text-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+  background: rgba(9, 13, 22, 0.78);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.xray-hotspots-container {
+  position: absolute;
+  inset: 0;
+}
+
+.xray-annotation-node {
+  position: absolute;
+  pointer-events: auto;
+  animation: fadeIn 0.4s ease backwards;
+}
+
+.xray-target-pin {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.xray-target-pin .pin-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #10b981;
+}
+
+.xray-target-pin .pin-ring {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid #38bdf8;
+  border-radius: 50%;
+  animation: hotspot-pulse 1.8s infinite;
+}
+
+.xray-callout-box {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  align-items: flex-start;
+  color: #38bdf8;
+  pointer-events: none;
+}
+
+.xray-annotation-node.side-left .xray-callout-box {
+  left: auto;
+  right: 8px;
+  flex-direction: row-reverse;
+}
+
+.xray-annotation-node.side-left .xray-leader-svg {
+  transform: scaleX(-1);
+}
+
+.xray-leader-svg {
+  width: 48px;
+  height: 22px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.xray-callout-content {
+  background: rgba(8, 14, 24, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(56, 189, 248, 0.55);
+  border-radius: 6px;
+  padding: 5px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 135px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75);
+}
+
+.xray-callout-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.xray-callout-val {
+  font-size: 0.74rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   РАЗДЕЛ 3: ИНТЕРАКТИВНЫЙ ХРОНО-АРХИВ 2.0 (ПОИСК, СМАРТ-ТЕГИ И TIMELINE)
+   ========================================================================== */
+.chrono-archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 28px;
+  background: rgba(12, 12, 18, 0.85);
+  border-bottom: 1px solid var(--color-glass-border);
+  flex-shrink: 0;
+}
+
+.archive-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 260px;
+}
+
+.archive-search-box .search-svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-accent);
+  pointer-events: none;
+}
+
+.archive-search-input {
+  width: 100%;
+  padding: 9px 70px 9px 38px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: var(--font-main);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.archive-search-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 15px rgba(var(--color-accent-rgb), 0.25);
+}
+
+.archive-found-badge {
+  position: absolute;
+  right: 10px;
+  padding: 2px 8px;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 6px;
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.archive-smart-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.smart-tag-btn {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.smart-tag-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.smart-tag-btn.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(212, 175, 55, 0.18) 100%);
+  border-color: var(--color-accent);
+  color: #ffffff;
+}
+
+.archive-view-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.archive-sort-btn {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 8px;
+  color: var(--color-gold);
+  font-family: var(--font-main);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.view-mode-segmented {
+  display: flex;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 9px;
+}
+
+.view-seg-btn {
+  padding: 5px 11px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-seg-btn.active {
+  background: var(--color-accent);
+  color: #09090d;
+  font-weight: 700;
+}
+
+/* Staggered fade-up карточек и мета-пилюли */
+.holo-archive-card {
+  animation: archiveCardFadeUp 0.42s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  border-color: var(--card-hall-border, rgba(255, 255, 255, 0.12));
+}
+
+.holo-archive-card:hover {
+  border-color: var(--card-hall-color, var(--color-accent));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 20px var(--card-hall-bg);
+}
+
+@keyframes archiveCardFadeUp {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-meta-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.card-meta-pill {
+  font-size: 0.68rem;
+  padding: 3px 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 5px;
+  color: var(--color-text-muted);
+}
+
+.card-meta-pill b {
+  color: #e2e8f0;
+}
+
+/* Временная шкала (Timeline 1941–2026) */
+.chrono-timeline-wrapper {
+  position: relative;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.chrono-timeline-axis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, var(--color-gold), var(--color-accent), #c084fc);
+  opacity: 0.45;
+}
+
+.timeline-node {
+  position: relative;
+  display: flex;
+  width: 50%;
+  animation: archiveCardFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.timeline-node.left {
+  align-self: flex-start;
+  padding-right: 42px;
+  justify-content: flex-end;
+}
+
+.timeline-node.right {
+  align-self: flex-end;
+  padding-left: 42px;
+  justify-content: flex-start;
+}
+
+.timeline-year-marker {
+  position: absolute;
+  top: 22px;
+  width: 64px;
+  height: 28px;
+  background: #0d0d14;
+  border: 2px solid var(--color-accent);
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  z-index: 3;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.8);
+}
+
+.timeline-node.left .timeline-year-marker { right: -32px; }
+.timeline-node.right .timeline-year-marker { left: -32px; }
+
+.timeline-card {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.timeline-thumb {
+  width: 100%;
+  height: 100%;
+  min-height: 125px;
+  object-fit: cover;
+}
+
+.timeline-card-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeline-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tl-hall-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border: 1px solid;
+  border-radius: 5px;
+}
+
+.tl-epoch-tag {
+  font-size: 0.68rem;
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.tl-3d-tag {
+  font-size: 0.65rem;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.timeline-title {
+  font-size: 0.92rem;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.timeline-desc {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.timeline-teleport-link {
+  margin-top: auto;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.empty-archive-box {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--color-text-muted);
+}
+
+.empty-archive-box .empty-icon {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* ==========================================================================
+   РАЗДЕЛ 4: QUIZ BATTLE HUD И СЕРТИФИКАТ ХРАНИТЕЛЯ
+   ========================================================================== */
+.battle-hud-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 14px;
+}
+
+.hud-stat-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-stat-pill .stat-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.hud-stat-pill .stat-val {
+  font-size: 0.95rem;
+  color: var(--color-accent);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.streak-pill.combo-hot .stat-val {
+  color: var(--color-gold);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+}
+
+.hud-timer-widget {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-ring-svg {
+  transform: rotate(-90deg);
+}
+
+.timer-ring-svg circle {
+  transition: stroke-dashoffset 0.35s linear, stroke 0.25s ease;
+}
+
+.timer-sec-text {
+  position: absolute;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-opt-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.opt-key-index {
+  padding: 3px 7px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+/* Персональный сертификат Знатока истории ЛДПК */
+.cert-stage-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quiz-confetti-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.keeper-certificate-card {
+  position: relative;
+  z-index: 2;
+  padding: 22px 24px;
+  background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.16), rgba(15, 15, 24, 0.96) 70%);
+  border: 1.5px solid rgba(212, 175, 55, 0.55);
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.75), inset 0 0 25px rgba(212, 175, 55, 0.08);
+  text-align: center;
+}
+
+.cert-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cert-seal-badge {
+  padding: 4px 10px;
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid var(--color-gold);
+  border-radius: 9999px;
+  color: var(--color-gold);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.cert-id-code {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.cert-main-heading {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+}
+
+.cert-sub-caption {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  margin-bottom: 14px;
+}
+
+.cert-owner-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.cert-name-input {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: #ffffff;
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+
+.cert-name-input:focus {
+  border-color: var(--color-gold);
+}
+
+.cert-Assigned-rank {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 16px;
+}
+
+.cert-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cert-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cert-metric span {
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+}
+
+.cert-metric strong {
+  font-size: 0.88rem;
+  color: #ffffff;
+}
+
+.cert-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cert-retry {
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .chrono-timeline-axis { left: 24px; }
+  .timeline-node { width: 100%; padding-left: 56px !important; padding-right: 0 !important; }
+  .timeline-year-marker { left: -8px !important; right: auto !important; }
+  .timeline-card { grid-template-columns: 1fr; }
+}
