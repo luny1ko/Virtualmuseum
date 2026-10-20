@@ -1,32 +1,39 @@
 // museum-3d-map.js
 /**
- * Глобальное обновление «Виртуального музея ЛДПК»:
- * 1. Museum3DMap (Digital Twin) — 3D-маяк «ВЫ ЗДЕСЬ» (GPS-Beacon) + точный Raycasting витрин с хитбоксами и телепортацией.
- * 2. ChronoArchiveHub — Интерактивный Хроно-Архив 2.0 (Поиск, 3D-Tilt сетка + Timeline 1941–2026, смарт-теги).
- * 3. QuizBattleHUD — Геймифицированный «Экзамен на Хранителя Музея» (Таймер, XP, Streak x2/x3, Web Audio SFX, Конфетти, Сертификат).
- * 4. HologramXRayInspector — Голографический рентген-сканер витрины.
+ * МОДУЛИ 2, 3, 4:
+ * - Museum3DMap (Three.js r128 Architectural Clay & Modern Gallery Digital Twin):
+ *   Матовый архитектурный гипс слоновой кости, рельефные карнизы, мягкий свет залов,
+ *   латунные музейные тумбы витрин, маяк «ВЫ ЗДЕСЬ» (Sprite) и плавный перелёт с открытием витрины.
+ * - ChronoArchiveCatalogV2 (Каталог 2.0):
+ *   Режимы «Галерея» (3D-Tilt) и «Хронологическая ось (Timeline 1941–2026)»,
+ *   живой поиск по названию/описанию/тегам (ЛиАЗ, арифмометр, фарфор, война), фильтры «Все» / «Только с 3D».
+ * - NobleQuizV2 (Викторина 2.0):
+ *   Римская нумерация (I, II, III, IV, V), латунный прогресс-бар, тактильный изумруд/терракот,
+ *   историческая справка и именная «Грамота знатока истории ЛДПК» с печатью музея.
  */
+
+import { globalSoundEngine, globalGalleryEnv } from './visual-sound.js';
 
 const THREE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 const ORBIT_CDN = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
 
-function loadExternalScript(src) {
+function loadScriptOnce(src) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
       resolve();
       return;
     }
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
   });
 }
 
 /* ==========================================================================
-   1. ЧЕСТНЫЙ 3D-ПЛАН ЗДАНИЯ НА THREE.JS + GPS-МАЯК «ВЫ ЗДЕСЬ» + RAYCASTING
+   МОДУЛЬ 2: ЧЕСТНЫЙ ИЗОМЕТРИЧЕСКИЙ 3D-ПЛАН ЗДАНИЯ НА THREE.JS (ARCHITECTURAL CLAY)
    ========================================================================== */
 export class Museum3DMap {
   constructor(appInstance) {
@@ -47,40 +54,46 @@ export class Museum3DMap {
     this.raycaster = null;
     this.pointer = { x: -999, y: -999 };
 
-    this.roomMeshes = new Map();
-    this.obeliskItems = [];
+    this.roomGroups = new Map();
+    this.pedestalItems = [];
     this.hitboxMeshes = [];
-    this.hoveredItem = null;
+    this.hoveredPedestal = null;
     this.cameraTween = null;
 
-    // 3D-маяк «ВЫ ЗДЕСЬ» (GPS-Beacon)
     this.userBeacon = {
       group: null,
-      wave1: null,
-      wave2: null,
+      pulseRing1: null,
+      pulseRing2: null,
       beam: null,
-      badge: null,
-      core: null,
+      sprite: null,
       targetPos: null
     };
 
-    // Архитектурные габариты залов из схемы здания (420x800, центр в 210, 400)
+    // Архитектурная экспликация залов с благородной интерьерной подсветкой
     this.hallSpecs = {
       'college-history': {
-        x: 20, y: 20, w: 380, h: 230, wallH: 48,
-        color: 0xfbbf24, emissive: 0xd97706, title: '01. ИСТОРИЯ ЛДПК'
+        x: 20, y: 20, w: 380, h: 230, wallH: 46,
+        lightColor: 0xd4af37, // Благородный золотой
+        floorTint: 0xede6d8,
+        title: 'I. ИСТОРИЯ ЛДПК'
       },
       'achievements': {
-        x: 20, y: 260, w: 155, h: 520, wallH: 48,
-        color: 0xc084fc, emissive: 0x7c3aed, title: '04. ДОСТИЖЕНИЯ'
+        x: 20, y: 260, w: 155, h: 520, wallH: 46,
+        lightColor: 0x9b89b3, // Приглушённая лаванда
+        floorTint: 0xe8e4ec,
+        title: 'IV. ДОСТИЖЕНИЯ'
       },
       'region-history': {
-        x: 185, y: 260, w: 215, h: 280, wallH: 48,
-        color: 0x38bdf8, emissive: 0x0284c7, title: '02. БЫТ И КУЛЬТУРА'
+        x: 185, y: 260, w: 215, h: 280, wallH: 46,
+        lightColor: 0x6d93a8, // Серо-голубой дулёвский
+        floorTint: 0xe3e9ec,
+        title: 'II. БЫТ И КУЛЬТУРА'
       },
       'military-glory': {
-        x: 185, y: 550, w: 215, h: 230, wallH: 48,
-        color: 0xf87171, emissive: 0xdc2626, title: '03. ВОЕННАЯ ПАМЯТЬ'
+        x: 185, y: 550, w: 215, h: 230, wallH: 46,
+        lightColor: 0xa64b4b, // Глубокий бордо
+        floorTint: 0xece3e1,
+        title: 'III. ВОЕННАЯ ПАМЯТЬ'
       }
     };
 
@@ -89,27 +102,27 @@ export class Museum3DMap {
 
   async init() {
     if (!this.wrapper) return;
-    this.mountDOMOverlays();
+    this.mountStageDOM();
 
     try {
-      await loadExternalScript(THREE_CDN);
-      await loadExternalScript(ORBIT_CDN);
-      this.setupThreeScene();
-      this.buildArchitectureGeometry();
-      this.buildUserGpsBeacon();
-      this.rebuildVitrineObelisks();
-      this.bindInteractionEvents();
+      await loadScriptOnce(THREE_CDN);
+      await loadScriptOnce(ORBIT_CDN);
+      this.initThreeEngine();
+      this.buildArchitecturalClayModel();
+      this.buildHereBeacon();
+      this.rebuildBrassPedestals();
+      this.bindEvents();
       this.isReady = true;
       this.syncRenderMode();
     } catch (err) {
-      console.warn('[Museum3DMap]: Ошибка инициализации Three.js, активен 2D режим.', err);
+      console.warn('[Museum3DMap]: Переключение на 2D SVG план.', err);
       this.force2D = true;
       this.syncRenderMode();
     }
   }
 
-  mountDOMOverlays() {
-    this.wrapper.classList.add('digital-twin-stage');
+  mountStageDOM() {
+    this.wrapper.classList.add('digital-twin-stage', 'clay-maquette-stage');
 
     this.canvasHost = document.createElement('div');
     this.canvasHost.id = 'three-map-host';
@@ -117,319 +130,333 @@ export class Museum3DMap {
     this.wrapper.appendChild(this.canvasHost);
 
     this.tooltipEl = document.createElement('div');
-    this.tooltipEl.className = 'three-vitrine-tooltip hidden';
+    this.tooltipEl.className = 'three-vitrine-tooltip clay-tooltip hidden';
     this.wrapper.appendChild(this.tooltipEl);
 
     const headerTools = document.querySelector('.map-header-tools');
     if (headerTools && !document.getElementById('btn-toggle-webgl-map')) {
-      const toggleBtn = document.createElement('button');
-      toggleBtn.type = 'button';
-      toggleBtn.id = 'btn-toggle-webgl-map';
-      toggleBtn.className = 'btn-map-tool active';
-      toggleBtn.innerHTML = '🧊 3D Twin (WebGL)';
-      toggleBtn.addEventListener('click', () => {
+      const modeBtn = document.createElement('button');
+      modeBtn.type = 'button';
+      modeBtn.id = 'btn-toggle-webgl-map';
+      modeBtn.className = 'btn-map-tool active';
+      modeBtn.textContent = '🏛 3D Макет';
+      modeBtn.addEventListener('click', () => {
         this.force2D = !this.force2D;
-        toggleBtn.classList.toggle('active', !this.force2D);
-        toggleBtn.innerHTML = this.force2D ? '📐 2D Чертеж' : '🧊 3D Twin (WebGL)';
+        modeBtn.classList.toggle('active', !this.force2D);
+        modeBtn.textContent = this.force2D ? '📐 2D Чертёж' : '🏛 3D Макет';
         this.syncRenderMode();
       });
-      headerTools.insertBefore(toggleBtn, headerTools.firstChild);
+      headerTools.insertBefore(modeBtn, headerTools.firstChild);
     }
 
-    const resetCamBtn = document.createElement('button');
-    resetCamBtn.type = 'button';
-    resetCamBtn.className = 'three-reset-cam-btn';
-    resetCamBtn.textContent = '⟲ Сбросить ракурс';
-    resetCamBtn.addEventListener('click', () => this.animateCameraToDefault());
-    this.canvasHost.appendChild(resetCamBtn);
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'three-reset-cam-btn';
+    resetBtn.textContent = '⟲ Общий вид макета';
+    resetBtn.addEventListener('click', () => this.resetCameraView());
+    this.canvasHost.appendChild(resetBtn);
   }
 
-  setupThreeScene() {
+  initThreeEngine() {
     const THREE = window.THREE;
     this.clock = new THREE.Clock();
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x07070c, 0.0007);
+    this.scene.background = new THREE.Color(0x181614);
+    this.scene.fog = new THREE.FogExp2(0x181614, 0.00055);
 
-    const width = this.wrapper.clientWidth || 880;
-    const height = this.wrapper.clientHeight || 520;
+    const w = this.wrapper.clientWidth || 920;
+    const h = this.wrapper.clientHeight || 520;
 
-    this.camera = new THREE.PerspectiveCamera(38, width / height, 10, 3500);
-    this.camera.position.set(-420, 620, 580);
+    // Изометрическая перспектива с малым углом обзора (эффект архитектурного макета)
+    this.camera = new THREE.PerspectiveCamera(28, w / h, 10, 4000);
+    this.camera.position.set(-540, 760, 680);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    this.renderer.setSize(width, height);
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer.setSize(w, h);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.toneMappingExposure = 1.08;
 
     this.canvasHost.appendChild(this.renderer.domElement);
 
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.06;
-    this.controls.maxPolarAngle = Math.PI / 2.15;
-    this.controls.minPolarAngle = 0.22;
-    this.controls.minDistance = 200;
-    this.controls.maxDistance = 1250;
-    this.controls.target.set(0, 10, 0);
+    this.controls.maxPolarAngle = Math.PI / 2.25;
+    this.controls.minPolarAngle = 0.25;
+    this.controls.minDistance = 260;
+    this.controls.maxDistance = 1450;
+    this.controls.target.set(0, 12, 0);
 
     this.raycaster = new THREE.Raycaster();
 
-    const ambientLight = new THREE.AmbientLight(0x1e293b, 1.5);
-    this.scene.add(ambientLight);
+    // Мягкий студийный свет для архитектурного гипса
+    const hemiLight = new THREE.HemisphereLight(0xfff8eb, 0x2a2521, 0.88);
+    this.scene.add(hemiLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-    dirLight.position.set(250, 600, 300);
-    this.scene.add(dirLight);
+    const sunLight = new THREE.DirectionalLight(0xfff3df, 0.72);
+    sunLight.position.set(320, 680, 420);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.camera.near = 100;
+    sunLight.shadow.camera.far = 1800;
+    const d = 520;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    this.scene.add(sunLight);
 
-    const gridHelper = new THREE.GridHelper(1100, 44, 0x38bdf8, 0x1e293b);
-    gridHelper.position.y = -1;
-    gridHelper.material.opacity = 0.22;
-    gridHelper.material.transparent = true;
-    this.scene.add(gridHelper);
+    // Подмакетная архитектурная плита (тёмный сланец с латунной рамкой)
+    const baseBoardGeo = new THREE.BoxGeometry(500, 10, 880);
+    const baseBoardMat = new THREE.MeshStandardMaterial({
+      color: 0x221f1c,
+      roughness: 0.85,
+      metalness: 0.08
+    });
+    const baseBoard = new THREE.Mesh(baseBoardGeo, baseBoardMat);
+    baseBoard.position.y = -5.5;
+    baseBoard.receiveShadow = true;
+    this.scene.add(baseBoard);
+
+    const trimEdges = new THREE.EdgesGeometry(baseBoardGeo);
+    const trimMat = new THREE.LineBasicMaterial({ color: 0xc5a059, transparent: true, opacity: 0.45 });
+    const trimLine = new THREE.LineSegments(trimEdges, trimMat);
+    trimLine.position.y = -5.5;
+    this.scene.add(trimLine);
   }
 
-  planToWorld(planX, planY) {
-    return { wx: planX - 210, wz: planY - 400 };
+  planToWorld(px, py) {
+    return { wx: px - 210, wz: py - 400 };
   }
 
-  buildArchitectureGeometry() {
+  /**
+   * Строит 3D-макет залов из матового архитектурного гипса с рельефными фасками и карнизами
+   */
+  buildArchitecturalClayModel() {
     const THREE = window.THREE;
+
+    // Материал матового гипса слоновой кости (Architectural Clay)
+    const clayWallMat = new THREE.MeshStandardMaterial({
+      color: 0xf2ece1,
+      roughness: 0.88,
+      metalness: 0.03
+    });
+
+    const chamferTrimMat = new THREE.MeshStandardMaterial({
+      color: 0xe2d9c8,
+      roughness: 0.78,
+      metalness: 0.08
+    });
 
     Object.entries(this.hallSpecs).forEach(([hallId, spec]) => {
       const group = new THREE.Group();
-      const centerPlanX = spec.x + spec.w / 2;
-      const centerPlanY = spec.y + spec.h / 2;
-      const { wx, wz } = this.planToWorld(centerPlanX, centerPlanY);
-
+      const cx = spec.x + spec.w / 2;
+      const cy = spec.y + spec.h / 2;
+      const { wx, wz } = this.planToWorld(cx, cy);
       group.position.set(wx, 0, wz);
-      group.userData = { hallId, spec };
 
-      const boxGeo = new THREE.BoxGeometry(spec.w, spec.wallH, spec.h);
-      const glassMat = new THREE.MeshPhysicalMaterial({
-        color: spec.color,
-        emissive: spec.emissive,
-        emissiveIntensity: 0.08,
-        roughness: 0.2,
-        metalness: 0.1,
-        transmission: 0.6,
-        transparent: true,
-        opacity: 0.34,
-        depthWrite: false
-      });
-
-      const roomMesh = new THREE.Mesh(boxGeo, glassMat);
-      roomMesh.position.y = spec.wallH / 2;
-      roomMesh.userData = { type: 'hall', hallId };
-      group.add(roomMesh);
-
-      const edgesGeo = new THREE.EdgesGeometry(boxGeo);
-      const edgesMat = new THREE.LineBasicMaterial({
-        color: spec.color,
-        transparent: true,
-        opacity: 0.65
-      });
-      const wireframe = new THREE.LineSegments(edgesGeo, edgesMat);
-      wireframe.position.y = spec.wallH / 2;
-      group.add(wireframe);
-
-      const floorGeo = new THREE.PlaneGeometry(spec.w - 4, spec.h - 4);
+      // 1. Матовая гипсовая плита пола зала
+      const floorGeo = new THREE.BoxGeometry(spec.w - 4, 4, spec.h - 4);
       const floorMat = new THREE.MeshStandardMaterial({
-        color: 0x0b0b12,
-        roughness: 0.35,
-        metalness: 0.6,
-        emissive: spec.emissive,
-        emissiveIntensity: 0.12
+        color: spec.floorTint,
+        roughness: 0.82,
+        metalness: 0.05
       });
       const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-      floorMesh.rotation.x = -Math.PI / 2;
-      floorMesh.position.y = 0.5;
+      floorMesh.position.y = 2;
+      floorMesh.receiveShadow = true;
       floorMesh.userData = { type: 'hall', hallId };
       group.add(floorMesh);
 
-      const pointLight = new THREE.PointLight(spec.color, 1.35, 340, 1.8);
-      pointLight.position.set(0, spec.wallH * 0.75, 0);
-      group.add(pointLight);
+      // 2. Объёмные стены по периметру зала с фасками (толщина стены 7 ед.)
+      const wallT = 7;
+      const wallH = spec.wallH;
 
-      const labelSprite = this.createRoomLabelSprite(spec.title, spec.color);
-      labelSprite.position.set(0, spec.wallH + 22, 0);
+      const createWallSegment = (w, h, d, x, z) => {
+        const wallGroup = new THREE.Group();
+        wallGroup.position.set(x, 0, z);
+
+        // Основное тело гипсовой стены
+        const bodyGeo = new THREE.BoxGeometry(w, h, d);
+        const bodyMesh = new THREE.Mesh(bodyGeo, clayWallMat);
+        bodyMesh.position.y = h / 2 + 2;
+        bodyMesh.castShadow = true;
+        bodyMesh.receiveShadow = true;
+        bodyMesh.userData = { type: 'hall', hallId };
+        wallGroup.add(bodyMesh);
+
+        // Верхний рельефный карниз (фаска)
+        const capGeo = new THREE.BoxGeometry(w + 2.4, 3.2, d + 2.4);
+        const capMesh = new THREE.Mesh(capGeo, chamferTrimMat);
+        capMesh.position.y = h + 2.5;
+        wallGroup.add(capMesh);
+
+        // Нижний плинтус
+        const plinthGeo = new THREE.BoxGeometry(w + 1.6, 4, d + 1.6);
+        const plinthMesh = new THREE.Mesh(plinthGeo, chamferTrimMat);
+        plinthMesh.position.y = 4;
+        wallGroup.add(plinthMesh);
+
+        group.add(wallGroup);
+      };
+
+      // Северная, Южная, Западная и Восточная стены (с учётом открытого обзора сверху)
+      createWallSegment(spec.w, wallH, wallT, 0, -spec.h / 2 + wallT / 2);
+      createWallSegment(spec.w, wallH * 0.42, wallT, 0, spec.h / 2 - wallT / 2);
+      createWallSegment(wallT, wallH, spec.h, -spec.w / 2 + wallT / 2, 0);
+      createWallSegment(wallT, wallH * 0.42, spec.h, spec.w / 2 - wallT / 2, 0);
+
+      // 3. Мягкий интерьерный источник света внутри зала
+      const roomLight = new THREE.PointLight(spec.lightColor, 1.15, 360, 1.6);
+      roomLight.position.set(0, wallH * 0.85, 0);
+      group.add(roomLight);
+
+      // 4. Архитектурная табличка с названием зала
+      const labelSprite = this.createArchitecturalLabel(spec.title, spec.lightColor);
+      labelSprite.position.set(0, wallH + 22, -spec.h * 0.28);
       group.add(labelSprite);
 
       this.scene.add(group);
-      this.roomMeshes.set(hallId, { group, roomMesh, floorMesh, glassMat, edgesMat, pointLight, spec });
+      this.roomGroups.set(hallId, { group, floorMesh, floorMat, roomLight, spec });
     });
   }
 
-  createRoomLabelSprite(text, hexColor) {
+  createArchitecturalLabel(text, hexColor) {
     const THREE = window.THREE;
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 96;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = 'rgba(10, 10, 16, 0.82)';
+    ctx.fillStyle = 'rgba(244, 239, 230, 0.95)';
     ctx.strokeStyle = '#' + hexColor.toString(16).padStart(6, '0');
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.roundRect(8, 8, 496, 80, 16);
+    ctx.roundRect(10, 12, 492, 72, 8);
     ctx.fill();
     ctx.stroke();
 
-    ctx.font = '700 26px Inter, sans-serif';
-    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 24px Georgia, serif';
+    ctx.fillStyle = '#1f1c18';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, 256, 48);
 
-    const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
-    const sprite = new THREE.Sprite(material);
-    sprite.scale.set(130, 24, 1);
-    return sprite;
-  }
-
-  /* ==========================================================================
-     ЗАДАЧА 1: 3D-МАЯК «ВЫ ЗДЕСЬ» (GPS-BEACON С ВОЛНАМИ, ЛУЧОМ И BILLBOARD-БЕЙДЖЕМ)
-     ========================================================================== */
-  buildUserGpsBeacon() {
-    const THREE = window.THREE;
-    const beaconGroup = new THREE.Group();
-
-    // 1. Центральный изумрудный диск на полу
-    const coreGeo = new THREE.CircleGeometry(9, 32);
-    const coreMat = new THREE.MeshBasicMaterial({
-      color: 0x10b981,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.95,
-      depthWrite: false
-    });
-    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-    coreMesh.rotation.x = -Math.PI / 2;
-    coreMesh.position.y = 1.8;
-    beaconGroup.add(coreMesh);
-
-    // 2. Две концентрические расходящиеся волны (Sonar Waves)
-    const createWaveRing = () => {
-      const geo = new THREE.RingGeometry(9, 13, 36);
-      const mat = new THREE.MeshBasicMaterial({
-        color: 0x10b981,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.85,
-        depthWrite: false
-      });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.rotation.x = -Math.PI / 2;
-      mesh.position.y = 1.6;
-      beaconGroup.add(mesh);
-      return { mesh, mat };
-    };
-
-    const wave1 = createWaveRing();
-    const wave2 = createWaveRing();
-
-    // 3. Вертикальный неоновый луч света, уходящий вверх
-    const beamGeo = new THREE.CylinderGeometry(1.2, 6.5, 92, 24, 1, true);
-    const beamMat = new THREE.MeshBasicMaterial({
-      color: 0x10b981,
-      transparent: true,
-      opacity: 0.34,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    });
-    const beamMesh = new THREE.Mesh(beamGeo, beamMat);
-    beamMesh.position.y = 47;
-    beaconGroup.add(beamMesh);
-
-    // 4. Парящий 3D-бейдж «ВЫ ЗДЕСЬ» с автоматическим billboarding к камере
-    const badgeSprite = this.createHereBadgeSprite();
-    badgeSprite.position.set(0, 98, 0);
-    beaconGroup.add(badgeSprite);
-
-    // Точечный изумрудный свет маяка
-    const beaconLight = new THREE.PointLight(0x10b981, 1.8, 180);
-    beaconLight.position.set(0, 22, 0);
-    beaconGroup.add(beaconLight);
-
-    this.scene.add(beaconGroup);
-
-    this.userBeacon = {
-      group: beaconGroup,
-      wave1,
-      wave2,
-      beam: beamMesh,
-      badge: badgeSprite,
-      core: coreMesh,
-      targetPos: new THREE.Vector3(0, 0, 0)
-    };
-
-    this.updateUserBeaconPosition(this.app?.currentHall?.id || 'college-history', true);
-  }
-
-  createHereBadgeSprite() {
-    const THREE = window.THREE;
-    const canvas = document.createElement('canvas');
-    canvas.width = 360;
-    canvas.height = 110;
-    const ctx = canvas.getContext('2d');
-
-    // Изумрудная капсула с неоновым свечением
-    ctx.shadowColor = '#10b981';
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = 'rgba(6, 28, 22, 0.94)';
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.roundRect(14, 12, 332, 72, 36);
-    ctx.fill();
-    ctx.stroke();
-
-    // Указательный треугольник вниз
-    ctx.beginPath();
-    ctx.moveTo(165, 84);
-    ctx.lineTo(195, 84);
-    ctx.lineTo(180, 104);
-    ctx.closePath();
-    ctx.fillStyle = '#10b981';
-    ctx.fill();
-
-    // Пульсирующая точка-индикатор
-    ctx.shadowBlur = 0;
-    ctx.beginPath();
-    ctx.arc(56, 48, 11, 0, Math.PI * 2);
-    ctx.fillStyle = '#34d399';
-    ctx.fill();
-
-    ctx.font = '800 30px Inter, sans-serif';
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('ВЫ ЗДЕСЬ', 84, 50);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
-      depthTest: false
-    });
-    const sprite = new THREE.Sprite(material);
-    sprite.scale.set(96, 30, 1);
-    sprite.renderOrder = 999;
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(126, 24, 1);
     return sprite;
   }
 
   /**
-   * Плавное перемещение маяка «ВЫ ЗДЕСЬ» в свободный центр активного зала
+   * Создаёт изумрудный маяк «ВЫ ЗДЕСЬ» на полу активного зала с вертикальным лучом и Sprite-бейджем
    */
-  updateUserBeaconPosition(hallId, instant = false) {
+  buildHereBeacon() {
+    const THREE = window.THREE;
+    const group = new THREE.Group();
+
+    // Изумрудная точка на полу
+    const discGeo = new THREE.CircleGeometry(8.5, 32);
+    const discMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.92
+    });
+    const disc = new THREE.Mesh(discGeo, discMat);
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = 4.6;
+    group.add(disc);
+
+    // Расходящиеся пульсирующие кольца
+    const makeRing = () => {
+      const geo = new THREE.RingGeometry(8.5, 11.5, 32);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x10b981,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.75
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.y = 4.5;
+      group.add(mesh);
+      return { mesh, mat };
+    };
+
+    const pulseRing1 = makeRing();
+    const pulseRing2 = makeRing();
+
+    // Мягкий вертикальный световой луч
+    const beamGeo = new THREE.CylinderGeometry(1.0, 5.5, 76, 24, 1, true);
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.26,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const beam = new THREE.Mesh(beamGeo, beamMat);
+    beam.position.y = 42;
+    group.add(beam);
+
+    // Парящий билборд-бейдж «ВЫ ЗДЕСЬ» (Sprite), который всегда смотрит в камеру
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = 'rgba(20, 48, 38, 0.96)';
+    ctx.strokeStyle = '#34d399';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(12, 10, 296, 64, 32);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(52, 42, 9, 0, Math.PI * 2);
+    ctx.fillStyle = '#10b981';
+    ctx.fill();
+
+    ctx.font = '700 26px Inter, sans-serif';
+    ctx.fillStyle = '#f4efe6';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ВЫ ЗДЕСЬ', 76, 43);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(84, 25, 1);
+    sprite.position.set(0, 86, 0);
+    sprite.renderOrder = 999;
+    group.add(sprite);
+
+    this.scene.add(group);
+    this.userBeacon = {
+      group,
+      pulseRing1,
+      pulseRing2,
+      beam,
+      sprite,
+      targetPos: new THREE.Vector3(0, 0, 0)
+    };
+
+    this.updateBeaconHall(this.app?.currentHall?.id || 'college-history', true);
+  }
+
+  updateBeaconHall(hallId, instant = false) {
     if (!this.userBeacon.group || !window.THREE) return;
     const spec = this.hallSpecs[hallId] || this.hallSpecs['college-history'];
-
-    // Размещаем маяк со смещением к входу комнаты, чтобы он не сливался с маркерами витрин
-    const planX = spec.x + spec.w * 0.22;
-    const planY = spec.y + spec.h * 0.28;
-    const { wx, wz } = this.planToWorld(planX, planY);
+    const px = spec.x + spec.w * 0.22;
+    const py = spec.y + spec.h * 0.30;
+    const { wx, wz } = this.planToWorld(px, py);
 
     this.userBeacon.targetPos.set(wx, 0, wz);
     if (instant) {
@@ -437,15 +464,15 @@ export class Museum3DMap {
     }
   }
 
-  /* ==========================================================================
-     ЗАДАЧА 2: ИНТЕРАКТИВНЫЕ 3D-МАРКЕРЫ ВИТРИН С УВЕЛИЧЕННЫМИ ХИТБОКСАМИ
-     ========================================================================== */
-  rebuildVitrineObelisks() {
+  /**
+   * Размещает на координатах витрин латунные/золотые музейные постаменты-тумбы с микро-подсветкой
+   */
+  rebuildBrassPedestals() {
     if (!this.scene || !window.THREE) return;
     const THREE = window.THREE;
 
-    this.obeliskItems.forEach((item) => this.scene.remove(item.holder));
-    this.obeliskItems = [];
+    this.pedestalItems.forEach((p) => this.scene.remove(p.holder));
+    this.pedestalItems = [];
     this.hitboxMeshes = [];
 
     const halls = this.app?.data?.halls || [];
@@ -458,335 +485,313 @@ export class Museum3DMap {
         const relX = spot.mapX !== undefined ? spot.mapX : spot.x;
         const relY = spot.mapY !== undefined ? spot.mapY : spot.y;
 
-        const planX = spec.x + (relX / 100) * spec.w;
-        const planY = spec.y + (relY / 100) * spec.h;
-        const { wx, wz } = this.planToWorld(planX, planY);
+        const px = spec.x + (relX / 100) * spec.w;
+        const py = spec.y + (relY / 100) * spec.h;
+        const { wx, wz } = this.planToWorld(px, py);
 
         const holder = new THREE.Group();
-        holder.position.set(wx, 0, wz);
+        holder.position.set(wx, 4, wz);
 
         const payload = {
           type: 'vitrine',
           hallId: hall.id,
           hallName: hall.name,
           spot,
-          index: idx + 1,
-          baseColor: spec.color
+          index: idx + 1
         };
 
-        // 1. Световой конус в пол
-        const coneGeo = new THREE.ConeGeometry(11, 28, 20, 1, true);
-        const coneMat = new THREE.MeshBasicMaterial({
-          color: spec.color,
-          transparent: true,
-          opacity: 0.25,
+        // 1. Подвижная музейная тумба-постамент (гипсовая колонна + латунная капитель)
+        const pedestalGroup = new THREE.Group();
+
+        const baseGeo = new THREE.BoxGeometry(16, 18, 16);
+        const baseMat = new THREE.MeshStandardMaterial({
+          color: 0xf4efe6,
+          roughness: 0.7,
+          metalness: 0.08
+        });
+        const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+        baseMesh.position.y = 9;
+        baseMesh.castShadow = true;
+        pedestalGroup.add(baseMesh);
+
+        // Латунная верхняя плита постамента
+        const brassTopGeo = new THREE.BoxGeometry(18.5, 3.5, 18.5);
+        const brassTopMat = new THREE.MeshStandardMaterial({
+          color: 0xd4af37,
+          emissive: 0x8a6d1b,
+          emissiveIntensity: 0.35,
+          roughness: 0.28,
+          metalness: 0.85
+        });
+        const brassTop = new THREE.Mesh(brassTopGeo, brassTopMat);
+        brassTop.position.y = 19.5;
+        pedestalGroup.add(brassTop);
+
+        // Миниатюрный золотой артефакт на постаменте
+        const relicGeo = new THREE.OctahedronGeometry(5.5, 0);
+        const relicMat = new THREE.MeshStandardMaterial({
+          color: 0xfff3d1,
+          emissive: 0xc5a059,
+          emissiveIntensity: 0.5,
+          roughness: 0.2,
+          metalness: 0.9
+        });
+        const relicMesh = new THREE.Mesh(relicGeo, relicMat);
+        relicMesh.position.y = 27;
+        pedestalGroup.add(relicMesh);
+
+        holder.add(pedestalGroup);
+
+        // 2. Тёплый световой ореол вокруг постамента на полу
+        const haloGeo = new THREE.RingGeometry(10, 14.5, 28);
+        const haloMat = new THREE.MeshBasicMaterial({
+          color: 0xd4af37,
           side: THREE.DoubleSide,
-          depthWrite: false
-        });
-        const lightCone = new THREE.Mesh(coneGeo, coneMat);
-        lightCone.position.y = 14;
-        holder.add(lightCone);
-
-        // 2. Кольцо на полу
-        const ringGeo = new THREE.RingGeometry(7, 11.5, 24);
-        const ringMat = new THREE.MeshBasicMaterial({
-          color: spec.color,
-          side: THREE.DoubleSide,
           transparent: true,
-          opacity: 0.65,
-          depthWrite: false
+          opacity: 0.55
         });
-        const floorRing = new THREE.Mesh(ringGeo, ringMat);
-        floorRing.rotation.x = -Math.PI / 2;
-        floorRing.position.y = 1.4;
-        holder.add(floorRing);
+        const haloRing = new THREE.Mesh(haloGeo, haloMat);
+        haloRing.rotation.x = -Math.PI / 2;
+        haloRing.position.y = 0.4;
+        holder.add(haloRing);
 
-        // 3. Вращающийся 3D-обелиск (OctahedronGeometry)
-        const octaGeo = new THREE.OctahedronGeometry(10, 0);
-        const octaMat = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
-          emissive: spec.color,
-          emissiveIntensity: 0.85,
-          roughness: 0.15,
-          metalness: 0.8
-        });
-        const obelisk = new THREE.Mesh(octaGeo, octaMat);
-        obelisk.position.y = 28;
-        obelisk.userData = payload;
-        holder.add(obelisk);
+        // 3. Номер витрины в латунном медальоне
+        const badgeSprite = this.createPedestalNumberBadge(idx + 1);
+        badgeSprite.position.set(0, 40, 0);
+        holder.add(badgeSprite);
 
-        // 4. Невидимая сфера-хитбокс увеличенного радиуса (гарантирует 100% точность клика мышью и тачем)
-        const hitGeo = new THREE.SphereGeometry(24, 12, 12);
-        const hitMat = new THREE.MeshBasicMaterial({
-          transparent: true,
-          opacity: 0,
-          depthWrite: false
-        });
+        // 4. Невидимый хитбокс для удобного Raycasting
+        const hitGeo = new THREE.BoxGeometry(28, 44, 28);
+        const hitMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
         const hitbox = new THREE.Mesh(hitGeo, hitMat);
-        hitbox.position.y = 26;
-        hitbox.userData = { ...payload, itemRef: null };
+        hitbox.position.y = 22;
         holder.add(hitbox);
 
-        // 5. Мини-бейдж с номером витрины над кристаллом
-        const numSprite = this.createVitrineNumSprite(idx + 1, spec.color);
-        numSprite.position.set(0, 44, 0);
-        holder.add(numSprite);
-
-        const itemObj = {
+        const itemRef = {
           holder,
-          obelisk,
-          hitbox,
-          octaMat,
-          coneMat,
-          floorRing,
-          numSprite,
+          pedestalGroup,
+          brassTopMat,
+          relicMesh,
+          haloRing,
+          haloMat,
           payload,
-          phase: idx * 0.85
+          currentLift: 0
         };
-        hitbox.userData.itemRef = itemObj;
-        obelisk.userData.itemRef = itemObj;
+
+        hitbox.userData = { itemRef };
+        baseMesh.userData = { itemRef };
+        brassTop.userData = { itemRef };
 
         this.scene.add(holder);
-        this.obeliskItems.push(itemObj);
-        this.hitboxMeshes.push(hitbox, obelisk);
+        this.pedestalItems.push(itemRef);
+        this.hitboxMeshes.push(hitbox, baseMesh, brassTop);
       });
     });
   }
 
-  createVitrineNumSprite(num, hexColor) {
+  createPedestalNumberBadge(num) {
     const THREE = window.THREE;
     const canvas = document.createElement('canvas');
     canvas.width = 64;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = 'rgba(12, 12, 20, 0.92)';
-    ctx.strokeStyle = '#' + hexColor.toString(16).padStart(6, '0');
+    ctx.fillStyle = '#1e1b18';
+    ctx.strokeStyle = '#d4af37';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(32, 32, 26, 0, Math.PI * 2);
+    ctx.arc(32, 32, 25, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    ctx.font = '800 26px Inter, sans-serif';
-    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 25px Georgia, serif';
+    ctx.fillStyle = '#f4efe6';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(num), 32, 33);
 
-    const texture = new THREE.CanvasTexture(canvas);
-    const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(16, 16, 1);
+    sprite.scale.set(15, 15, 1);
     return sprite;
   }
 
   highlightActiveHall(activeHallId) {
-    this.roomMeshes.forEach((data, hallId) => {
+    this.roomGroups.forEach((r, hallId) => {
       const isCurrent = hallId === activeHallId;
-      data.glassMat.opacity = isCurrent ? 0.52 : 0.25;
-      data.glassMat.emissiveIntensity = isCurrent ? 0.28 : 0.06;
-      data.edgesMat.opacity = isCurrent ? 1.0 : 0.42;
-      data.pointLight.intensity = isCurrent ? 2.2 : 0.85;
+      r.roomLight.intensity = isCurrent ? 1.85 : 0.75;
+      r.floorMat.emissive = new window.THREE.Color(isCurrent ? r.spec.lightColor : 0x000000);
+      r.floorMat.emissiveIntensity = isCurrent ? 0.12 : 0;
     });
-    this.updateUserBeaconPosition(activeHallId, false);
+    this.updateBeaconHall(activeHallId, false);
   }
 
-  bindInteractionEvents() {
-    const domElem = this.renderer.domElement;
+  bindEvents() {
+    const domEl = this.renderer.domElement;
 
-    const updatePointerFromEvent = (e) => {
-      const rect = domElem.getBoundingClientRect();
+    const updateMouse = (e) => {
+      const rect = domEl.getBoundingClientRect();
       this.pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       this.pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      return { localX: e.clientX - rect.left, localY: e.clientY - rect.top };
+      return { lx: e.clientX - rect.left, ly: e.clientY - rect.top };
     };
 
-    domElem.addEventListener('pointermove', (e) => {
-      const { localX, localY } = updatePointerFromEvent(e);
-      this.performRaycast(localX, localY);
+    domEl.addEventListener('pointermove', (e) => {
+      const { lx, ly } = updateMouse(e);
+      this.checkRaycastHover(lx, ly);
     });
 
-    let downPos = { x: 0, y: 0, time: 0 };
-    domElem.addEventListener('pointerdown', (e) => {
-      downPos = { x: e.clientX, y: e.clientY, time: performance.now() };
-      updatePointerFromEvent(e);
+    let downPt = { x: 0, y: 0, t: 0 };
+    domEl.addEventListener('pointerdown', (e) => {
+      downPt = { x: e.clientX, y: e.clientY, t: performance.now() };
+      updateMouse(e);
     });
 
-    domElem.addEventListener('pointerup', (e) => {
-      const dist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
-      const elapsed = performance.now() - downPos.time;
-      // Допускаем небольшое смещение руки при клике (до 12px)
-      if (dist > 12 || elapsed > 600) return;
-      updatePointerFromEvent(e);
-      this.handleSceneClick();
+    domEl.addEventListener('pointerup', (e) => {
+      const dist = Math.hypot(e.clientX - downPt.x, e.clientY - downPt.y);
+      if (dist > 12 || performance.now() - downPt.t > 600) return;
+      updateMouse(e);
+      this.handleMapClick();
     });
 
     window.addEventListener('resize', () => this.handleResize());
 
-    const liteObserver = new MutationObserver(() => this.syncRenderMode());
-    liteObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    const liteObs = new MutationObserver(() => this.syncRenderMode());
+    liteObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
-  performRaycast(localX, localY) {
+  checkRaycastHover(lx, ly) {
     if (!this.raycaster || !this.camera) return;
     this.raycaster.setFromCamera(this.pointer, this.camera);
 
-    const intersects = this.raycaster.intersectObjects(this.hitboxMeshes, true);
-
-    if (intersects.length > 0) {
-      const hitObj = intersects[0].object;
-      const itemRef = hitObj.userData?.itemRef;
+    const hits = this.raycaster.intersectObjects(this.hitboxMeshes, false);
+    if (hits.length > 0) {
+      const itemRef = hits[0].object.userData?.itemRef;
       if (itemRef) {
-        this.hoveredItem = itemRef;
+        this.hoveredPedestal = itemRef;
         this.renderer.domElement.style.cursor = 'pointer';
 
         const { spot, index, hallName } = itemRef.payload;
         this.tooltipEl.innerHTML = `
           <span class="tt-hall">${hallName} • ВИТРИНА №${index}</span>
           <strong class="tt-title">${spot.title}</strong>
-          <span class="tt-epoch">${spot.epoch || 'Исторический фонд'} — Нажмите для телепортации</span>
+          <span class="tt-epoch">${spot.epoch || 'Фонд музея'} — Нажмите для перехода к витрине</span>
         `;
-        this.tooltipEl.style.left = `${localX}px`;
-        this.tooltipEl.style.top = `${localY - 20}px`;
+        this.tooltipEl.style.left = `${lx}px`;
+        this.tooltipEl.style.top = `${ly - 18}px`;
         this.tooltipEl.classList.remove('hidden');
         return;
       }
     }
 
-    this.hoveredItem = null;
+    this.hoveredPedestal = null;
     this.renderer.domElement.style.cursor = 'grab';
     this.tooltipEl.classList.add('hidden');
   }
 
-  handleSceneClick() {
+  handleMapClick() {
     if (!this.raycaster || !this.camera) return;
     this.raycaster.setFromCamera(this.pointer, this.camera);
 
-    // 1. Приоритетная проверка клика по 3D-маркеру витрины (или наведенному маркеру)
-    const vitrineHits = this.raycaster.intersectObjects(this.hitboxMeshes, true);
-    const activeVitrineItem = vitrineHits[0]?.object?.userData?.itemRef || this.hoveredItem;
+    const hits = this.raycaster.intersectObjects(this.hitboxMeshes, false);
+    const chosen = hits[0]?.object?.userData?.itemRef || this.hoveredPedestal;
 
-    if (activeVitrineItem) {
-      const { hallId, spot } = activeVitrineItem.payload;
-      const worldPos = new window.THREE.Vector3();
-      activeVitrineItem.obelisk.getWorldPosition(worldPos);
-
+    if (chosen) {
+      globalSoundEngine?.playNobleClick();
+      const { hallId, spot } = chosen.payload;
+      const targetWorld = chosen.holder.position.clone();
       this.tooltipEl.classList.add('hidden');
 
-      // Кинематографичный подлёт камеры к выбранному маркеру -> закрытие карты -> открытие витрины
-      this.flyCameraToPoint(worldPos, async () => {
-        await this.executeVitrineTeleport(hallId, spot);
+      this.flyToTarget(targetWorld, async () => {
+        await this.teleportAndOpenVitrine(hallId, spot);
       });
       return;
     }
 
-    // 2. Если кликнули просто по полу/боксу комнаты — переходим в этот зал
-    const roomTargets = [];
-    this.roomMeshes.forEach((r) => {
-      roomTargets.push(r.floorMesh, r.roomMesh);
-    });
-    const roomHits = this.raycaster.intersectObjects(roomTargets, false);
+    // Проверка клика по полу зала для перехода в зал
+    const floorMeshes = [];
+    this.roomGroups.forEach((r) => floorMeshes.push(r.floorMesh));
+    const roomHits = this.raycaster.intersectObjects(floorMeshes, false);
 
     if (roomHits.length > 0) {
       const { hallId } = roomHits[0].object.userData;
-      const roomData = this.roomMeshes.get(hallId);
-      if (roomData) {
-        const centerWorld = roomData.group.position.clone();
-        this.flyCameraToPoint(centerWorld, async () => {
-          if (this.app) {
-            this.app.closeMap();
-            if (this.app.currentHall?.id !== hallId) {
-              await this.app.switchHall(hallId);
-            }
+      const rData = this.roomGroups.get(hallId);
+      if (rData) {
+        globalSoundEngine?.playNobleClick();
+        this.flyToTarget(rData.group.position.clone(), async () => {
+          this.app.closeMap();
+          if (this.app.currentHall?.id !== hallId) {
+            await this.app.switchHall(hallId);
           }
         });
       }
     }
   }
 
-  /**
-   * Надежный телепорт к витрине: закрывает 3D-карту, переключает зал и гарантированно распахивает Drawer
-   */
-  async executeVitrineTeleport(hallId, spotObject) {
-    if (!this.app || !spotObject) return;
-
+  async teleportAndOpenVitrine(hallId, spot) {
+    if (!this.app || !spot) return;
     this.app.closeMap();
     this.stopLoop();
 
-    // Если пользователь уже в нужном зале и не идет переход — сразу открываем шторку витрины
     if (this.app.currentHall?.id === hallId && !this.app.isTransitioning) {
-      const targetSpot =
-        this.app.currentHall.hotspots?.find((s) => s.id === spotObject.id) || spotObject;
-      setTimeout(() => {
-        this.app.openVitrineDrawer(targetSpot);
-      }, 120);
+      const targetSpot = this.app.currentHall.hotspots?.find((s) => s.id === spot.id) || spot;
+      setTimeout(() => this.app.openVitrineDrawer(targetSpot), 100);
       return;
     }
 
-    // Иначе переключаем зал с передачей ID целевой витрины
     this.app.isTransitioning = false;
-    await this.app.switchHall(hallId, spotObject.id);
+    await this.app.switchHall(hallId, spot.id);
 
-    // Страховочная проверка: если видео-переход завершился, убеждаемся, что шторка открыта
     setTimeout(() => {
       if (this.app.dom?.drawer && !this.app.dom.drawer.classList.contains('active')) {
-        const freshHall = this.app.data?.halls?.find((h) => h.id === hallId);
-        const freshSpot = freshHall?.hotspots?.find((s) => s.id === spotObject.id) || spotObject;
-        this.app.openVitrineDrawer(freshSpot);
+        const hallObj = this.app.data?.halls?.find((h) => h.id === hallId);
+        const foundSpot = hallObj?.hotspots?.find((s) => s.id === spot.id) || spot;
+        this.app.openVitrineDrawer(foundSpot);
       }
-    }, 450);
+    }, 420);
   }
 
-  flyCameraToPoint(targetVec, onComplete) {
-    const startCam = this.camera.position.clone();
-    const startTarget = this.controls.target.clone();
-    const endTarget = new window.THREE.Vector3(targetVec.x, 22, targetVec.z);
-    const endCam = new window.THREE.Vector3(targetVec.x - 105, 155, targetVec.z + 145);
-
+  flyToTarget(vec, onComplete) {
     this.cameraTween = {
       startTime: performance.now(),
-      duration: 580,
-      startCam,
-      endCam,
-      startTarget,
-      endTarget,
+      duration: 560,
+      startCam: this.camera.position.clone(),
+      endCam: new window.THREE.Vector3(vec.x - 120, 175, vec.z + 160),
+      startTarget: this.controls.target.clone(),
+      endTarget: new window.THREE.Vector3(vec.x, 20, vec.z),
       onComplete
     };
   }
 
-  animateCameraToDefault() {
+  resetCameraView() {
     if (!window.THREE || !this.camera) return;
     this.cameraTween = {
       startTime: performance.now(),
-      duration: 550,
+      duration: 520,
       startCam: this.camera.position.clone(),
-      endCam: new window.THREE.Vector3(-420, 620, 580),
+      endCam: new window.THREE.Vector3(-540, 760, 680),
       startTarget: this.controls.target.clone(),
-      endTarget: new window.THREE.Vector3(0, 10, 0),
+      endTarget: new window.THREE.Vector3(0, 12, 0),
       onComplete: null
     };
   }
 
   handleResize() {
     if (!this.renderer || !this.camera || !this.wrapper) return;
-    const width = this.wrapper.clientWidth || 880;
-    const height = Math.max(440, this.wrapper.clientHeight || 520);
-    this.camera.aspect = width / height;
+    const w = this.wrapper.clientWidth || 920;
+    const h = Math.max(440, this.wrapper.clientHeight || 520);
+    this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(w, h);
   }
 
   syncRenderMode() {
     const isLite = document.body.classList.contains('lite-mode');
     const use2D = isLite || this.force2D || !this.isReady;
 
-    if (this.svgFallback) {
-      this.svgFallback.style.display = use2D ? 'block' : 'none';
-    }
-    if (this.canvasHost) {
-      this.canvasHost.style.display = use2D ? 'none' : 'block';
-    }
+    if (this.svgFallback) this.svgFallback.style.display = use2D ? 'block' : 'none';
+    if (this.canvasHost) this.canvasHost.style.display = use2D ? 'none' : 'block';
 
     if (!use2D && this.app?.isMapOpen) {
       this.handleResize();
@@ -799,7 +804,7 @@ export class Museum3DMap {
   startLoop() {
     if (this.isRendering) return;
     this.isRendering = true;
-    this.renderLoop();
+    this.renderFrame();
   }
 
   stopLoop() {
@@ -810,91 +815,75 @@ export class Museum3DMap {
     }
   }
 
-  renderLoop() {
+  renderFrame() {
     if (!this.isRendering) return;
-    const elapsed = this.clock ? this.clock.getElapsedTime() : performance.now() * 0.001;
+    const t = this.clock ? this.clock.getElapsedTime() : performance.now() * 0.001;
 
-    // 1. Анимация перелёта камеры
     if (this.cameraTween) {
-      const now = performance.now();
-      const progress = Math.min(1, (now - this.cameraTween.startTime) / this.cameraTween.duration);
-      const ease = 1 - Math.pow(1 - progress, 3);
-
+      const p = Math.min(1, (performance.now() - this.cameraTween.startTime) / this.cameraTween.duration);
+      const ease = 1 - Math.pow(1 - p, 3);
       this.camera.position.lerpVectors(this.cameraTween.startCam, this.cameraTween.endCam, ease);
       this.controls.target.lerpVectors(this.cameraTween.startTarget, this.cameraTween.endTarget, ease);
-
-      if (progress >= 1) {
+      if (p >= 1) {
         const cb = this.cameraTween.onComplete;
         this.cameraTween = null;
-        if (typeof cb === 'function') cb();
+        if (cb) cb();
       }
     }
 
-    // 2. Анимация 3D-маяка «ВЫ ЗДЕСЬ» (концентрические волны + левитация бейджа)
+    // Пульсация маяка «ВЫ ЗДЕСЬ»
     if (this.userBeacon.group) {
-      this.userBeacon.group.position.lerp(this.userBeacon.targetPos, 0.08);
+      this.userBeacon.group.position.lerp(this.userBeacon.targetPos, 0.09);
+      const w1 = (t * 0.75) % 1;
+      const w2 = (t * 0.75 + 0.5) % 1;
 
-      const w1Phase = (elapsed * 0.85) % 1;
-      const w2Phase = (elapsed * 0.85 + 0.5) % 1;
+      this.userBeacon.pulseRing1.mesh.scale.setScalar(1 + w1 * 3.0);
+      this.userBeacon.pulseRing1.mat.opacity = (1 - w1) * 0.75;
 
-      this.userBeacon.wave1.mesh.scale.setScalar(1 + w1Phase * 3.4);
-      this.userBeacon.wave1.mat.opacity = (1 - w1Phase) * 0.85;
+      this.userBeacon.pulseRing2.mesh.scale.setScalar(1 + w2 * 3.0);
+      this.userBeacon.pulseRing2.mat.opacity = (1 - w2) * 0.75;
 
-      this.userBeacon.wave2.mesh.scale.setScalar(1 + w2Phase * 3.4);
-      this.userBeacon.wave2.mat.opacity = (1 - w2Phase) * 0.85;
-
-      this.userBeacon.badge.position.y = 96 + Math.sin(elapsed * 3.2) * 4;
+      this.userBeacon.sprite.position.y = 85 + Math.sin(t * 2.8) * 3;
     }
 
-    // 3. Анимация маркеров витрин (Scale 1.35 + яркое свечение при наведении)
-    this.obeliskItems.forEach((item) => {
-      const isHovered = this.hoveredItem === item;
-      item.obelisk.rotation.y = elapsed * (isHovered ? 3.4 : 1.2) + item.phase;
-      item.obelisk.position.y = 28 + Math.sin(elapsed * 2.5 + item.phase) * 3.2;
+    // Плавный подъём и подсветка тумбы витрины при наведении
+    this.pedestalItems.forEach((item, idx) => {
+      const isHovered = this.hoveredPedestal === item;
+      const targetLift = isHovered ? 7.5 : 0;
+      item.currentLift += (targetLift - item.currentLift) * 0.16;
+      item.pedestalGroup.position.y = item.currentLift;
 
-      const targetScale = isHovered ? 1.38 : 1.0;
-      item.obelisk.scale.lerp(new window.THREE.Vector3(targetScale, targetScale, targetScale), 0.16);
-      item.octaMat.emissiveIntensity = isHovered ? 2.2 : 0.85;
-      item.coneMat.opacity = isHovered ? 0.55 : 0.24;
-
-      const ringPulse = 1 + Math.sin(elapsed * 3 + item.phase) * 0.18;
-      item.floorRing.scale.set(ringPulse, ringPulse, 1);
+      item.brassTopMat.emissiveIntensity = isHovered ? 1.1 : 0.32;
+      item.haloMat.opacity = isHovered ? 0.9 : 0.45;
+      item.relicMesh.rotation.y = t * (isHovered ? 2.6 : 0.9) + idx;
     });
 
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
-
-    this.rafId = requestAnimationFrame(() => this.renderLoop());
+    this.rafId = requestAnimationFrame(() => this.renderFrame());
   }
 }
 
 /* ==========================================================================
-   ЗАДАЧА 3: ИНТЕРАКТИВНЫЙ ХРОНО-АРХИВ 2.0 (ВСЕ ЭКСПОНАТЫ: 3D-TILT И TIMELINE)
+   МОДУЛЬ 3: РАЗДЕЛ «ВСЕ ЭКСПОНАТЫ» (КАТАЛОГ 2.0 — ГАЛЕРЕЯ 3D-TILT & TIMELINE)
    ========================================================================== */
-export class ChronoArchiveHub {
+export class ChronoArchiveCatalogV2 {
   constructor(appInstance) {
     this.app = appInstance;
-    this.viewMode = 'grid'; // 'grid' | 'timeline'
+    this.viewMode = 'gallery'; // 'gallery' | 'timeline'
     this.searchQuery = '';
-    this.smartTag = 'all'; // 'all' | '3d' | 'relics' | 'docs'
-    this.sortOrder = 'asc'; // 'asc' (1941->2026) | 'desc' (2026->1941)
+    this.only3D = false;
 
-    this.hallColorMap = {
-      'college-history': { color: '#fbbf24', bg: 'rgba(217, 119, 6, 0.18)', border: 'rgba(251, 191, 36, 0.45)' },
-      'region-history':  { color: '#38bdf8', bg: 'rgba(2, 132, 199, 0.18)', border: 'rgba(56, 189, 248, 0.45)' },
-      'military-glory':  { color: '#f87171', bg: 'rgba(220, 38, 38, 0.18)', border: 'rgba(248, 113, 113, 0.45)' },
-      'achievements':    { color: '#c084fc', bg: 'rgba(124, 58, 237, 0.18)', border: 'rgba(192, 132, 252, 0.45)' }
-    };
-
+    this.quickTags = ['ЛиАЗ', 'арифмометр', 'фарфор', 'война', 'Профессионалитет'];
     this.init();
   }
 
   init() {
-    this.injectArchiveToolbar();
-    this.overrideCatalogRendering();
+    this.mountCatalogToolbar();
+    this.overrideAppCatalogRender();
   }
 
-  injectArchiveToolbar() {
+  mountCatalogToolbar() {
     const sheetHeader = document.querySelector('#catalog-sheet .sheet-header');
     if (!sheetHeader || document.getElementById('chrono-archive-toolbar')) return;
 
@@ -902,202 +891,190 @@ export class ChronoArchiveHub {
     toolbar.id = 'chrono-archive-toolbar';
     toolbar.className = 'chrono-archive-toolbar';
 
+    const quickTagsHtml = this.quickTags.map((tag) =>
+      `<button type="button" class="quick-search-tag" data-q="${tag}">#${tag}</button>`
+    ).join('');
+
     toolbar.innerHTML = `
-      <!-- Живой поиск по ключевым словам -->
-      <div class="archive-search-box">
-        <svg class="search-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="search" id="archive-live-search" class="archive-search-input"
-               placeholder="Живой поиск (например: арифмометр, ЛиАЗ, фарфор, кубок, 1941)...">
-        <span id="archive-found-counter" class="archive-found-badge">0</span>
+      <!-- Живой поиск + быстрые теги -->
+      <div class="archive-search-wrap">
+        <div class="archive-search-box">
+          <svg class="search-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="search" id="archive-live-search" class="archive-search-input"
+                 placeholder="Поиск по названию, описанию и тегам (ЛиАЗ, арифмометр, фарфор, война)...">
+          <span id="archive-found-counter" class="archive-found-badge">0</span>
+        </div>
+        <div class="quick-tags-row" id="quick-tags-row">
+          <span class="quick-tags-label">Теги:</span>
+          ${quickTagsHtml}
+        </div>
       </div>
 
-      <!-- Смарт-теги категорий -->
-      <div class="archive-smart-tags" id="archive-smart-tags">
-        <button type="button" class="smart-tag-btn active" data-tag="all">✨ Все фонды</button>
-        <button type="button" class="smart-tag-btn" data-tag="3d">🧊 Только с 3D-моделями</button>
-        <button type="button" class="smart-tag-btn" data-tag="relics">🏺 Исторические реликвии</button>
-        <button type="button" class="smart-tag-btn" data-tag="docs">📜 Документы и летопись</button>
-      </div>
+      <!-- Фильтры «Все» / «Только с 3D» и Переключатель «Галерея» / «Хронологическая ось» -->
+      <div class="archive-controls-group">
+        <div class="archive-smart-tags" id="archive-3d-filter">
+          <button type="button" class="smart-tag-btn active" data-3d="all">Все экспонаты</button>
+          <button type="button" class="smart-tag-btn" data-3d="only3d">🧊 Только с 3D</button>
+        </div>
 
-      <!-- Переключатель вида: Карточки 3D-Tilt / Временная шкала (Timeline 1941-2026) -->
-      <div class="archive-view-controls">
-        <button type="button" id="archive-sort-btn" class="archive-sort-btn" title="Сортировка по хронологии">
-          ⇅ 1941 → 2026
-        </button>
-        <div class="view-mode-segmented">
-          <button type="button" class="view-seg-btn active" data-view="grid">🎴 Карточки 3D-Tilt</button>
-          <button type="button" class="view-seg-btn" data-view="timeline">⏳ Шкала 1941–2026</button>
+        <div class="view-mode-segmented" id="archive-view-switcher">
+          <button type="button" class="view-seg-btn active" data-view="gallery">🖼 Галерея</button>
+          <button type="button" class="view-seg-btn" data-view="timeline">⏳ Хронологическая ось (1941–2026)</button>
         </div>
       </div>
     `;
 
     sheetHeader.insertAdjacentElement('afterend', toolbar);
 
-    // События живого поиска
     const searchInput = document.getElementById('archive-live-search');
     searchInput.addEventListener('input', (e) => {
       this.searchQuery = e.target.value.trim().toLowerCase();
+      this.syncQuickTagHighlight();
       this.app.renderCatalogItems();
     });
 
-    // События смарт-тегов
-    document.getElementById('archive-smart-tags').addEventListener('click', (e) => {
+    // Быстрые теги (ЛиАЗ, арифмометр, фарфор, война...)
+    document.getElementById('quick-tags-row').addEventListener('click', (e) => {
+      const btn = e.target.closest('.quick-search-tag');
+      if (!btn) return;
+      const tagVal = btn.getAttribute('data-q') || '';
+      if (searchInput.value.toLowerCase() === tagVal.toLowerCase()) {
+        searchInput.value = '';
+        this.searchQuery = '';
+      } else {
+        searchInput.value = tagVal;
+        this.searchQuery = tagVal.toLowerCase();
+      }
+      this.syncQuickTagHighlight();
+      this.app.renderCatalogItems();
+    });
+
+    // Фильтр «Все» / «Только с 3D»
+    document.getElementById('archive-3d-filter').addEventListener('click', (e) => {
       const btn = e.target.closest('.smart-tag-btn');
       if (!btn) return;
-      document.querySelectorAll('.smart-tag-btn').forEach((b) => b.classList.remove('active'));
+      document.querySelectorAll('#archive-3d-filter .smart-tag-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
-      this.smartTag = btn.getAttribute('data-tag') || 'all';
+      this.only3D = btn.getAttribute('data-3d') === 'only3d';
       this.app.renderCatalogItems();
     });
 
-    // Сортировка по годам
-    const sortBtn = document.getElementById('archive-sort-btn');
-    sortBtn.addEventListener('click', () => {
-      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-      sortBtn.textContent = this.sortOrder === 'asc' ? '⇅ 1941 → 2026' : '⇅ 2026 → 1941';
+    // Переключатель «Галерея» / «Хронологическая ось (Timeline)»
+    document.getElementById('archive-view-switcher').addEventListener('click', (e) => {
+      const btn = e.target.closest('.view-seg-btn');
+      if (!btn) return;
+      document.querySelectorAll('#archive-view-switcher .view-seg-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      this.viewMode = btn.getAttribute('data-view') || 'gallery';
       this.app.renderCatalogItems();
     });
+  }
 
-    // Переключение режима отображения
-    toolbar.querySelectorAll('.view-seg-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        toolbar.querySelectorAll('.view-seg-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.viewMode = btn.getAttribute('data-view');
-        this.app.renderCatalogItems();
-      });
+  syncQuickTagHighlight() {
+    document.querySelectorAll('.quick-search-tag').forEach((btn) => {
+      const q = (btn.getAttribute('data-q') || '').toLowerCase();
+      btn.classList.toggle('active', Boolean(this.searchQuery && this.searchQuery === q));
     });
   }
 
-  /**
-   * Извлекает стартовый год из строки эпохи (для точной сортировки на шкале 1941–2026)
-   */
-  parseYear(epochStr = '') {
-    const match = epochStr.match(/(19\d{2}|20\d{2})/);
-    if (match) return parseInt(match[1], 10);
-    if (epochStr.includes('XIX')) return 1895;
-    if (epochStr.toLowerCase().includes('современ')) return 2024;
-    return 1975;
+  extractChronoYear(epoch = '') {
+    const m = epoch.match(/(19\d{2}|20\d{2})/);
+    if (m) return parseInt(m[1], 10);
+    if (epoch.includes('XIX')) return 1941; // В начале шкалы 1941–2026 с пометкой реликвий XIX в.
+    if (epoch.toLowerCase().includes('современ')) return 2026;
+    return 1970;
   }
 
-  /**
-   * Классифицирует экспонат для фильтр-тегов («Реликвии» vs «Документы»)
-   */
-  matchesSmartTag(spot) {
-    if (this.smartTag === 'all') return true;
-    const has3D = Boolean(spot.model3d && spot.model3d.trim() !== '');
-    if (this.smartTag === '3d') return has3D;
-
-    const text = `${spot.title} ${spot.description}`.toLowerCase();
-    const isRelic = /(арифмометр|сервиз|фарфор|радиола|самовар|кубок|чашка|фотоаппарат|баян)/i.test(text) || has3D;
-    const isDoc = /(книга памяти|становление|история в лицах|директор|проект|профессионалитет|студия|подвиг|письм)/i.test(text);
-
-    if (this.smartTag === 'relics') return isRelic;
-    if (this.smartTag === 'docs') return isDoc;
-    return true;
-  }
-
-  overrideCatalogRendering() {
+  overrideAppCatalogRender() {
     if (!this.app) return;
 
     this.app.renderCatalogItems = () => {
-      const container = this.app.dom.catalogGrid;
-      if (!container) return;
-      container.innerHTML = '';
+      const grid = this.app.dom.catalogGrid;
+      if (!grid) return;
+      grid.innerHTML = '';
 
-      const allHalls = this.app.data?.halls || [];
-      const collected = [];
+      const halls = this.app.data?.halls || [];
+      const items = [];
 
-      allHalls.forEach((hall) => {
+      halls.forEach((hall) => {
         if (this.app.catalogFilter !== 'all' && this.app.catalogFilter !== hall.id) return;
 
         (hall.hotspots || []).forEach((spot) => {
-          // 1. Проверка живого поиска
-          if (this.searchQuery) {
-            const extraText = (spot.extraInfo || []).map((i) => `${i.label} ${i.value}`).join(' ');
-            const haystack = `${spot.title} ${spot.epoch} ${spot.description} ${hall.name} ${extraText}`.toLowerCase();
-            if (!haystack.includes(this.searchQuery)) return;
-          }
-          // 2. Проверка смарт-тега
-          if (!this.matchesSmartTag(spot)) return;
+          const has3D = Boolean(spot.model3d && spot.model3d.trim() !== '');
+          if (this.only3D && !has3D) return;
 
-          collected.push({
+          if (this.searchQuery) {
+            const extraStr = (spot.extraInfo || []).map((i) => `${i.label} ${i.value}`).join(' ');
+            const fullText = `${spot.title} ${spot.epoch} ${spot.description} ${spot.audioText || ''} ${hall.name} ${extraStr}`.toLowerCase();
+            if (!fullText.includes(this.searchQuery)) return;
+          }
+
+          items.push({
             hall,
             spot,
-            year: this.parseYear(spot.epoch)
+            has3D,
+            year: this.extractChronoYear(spot.epoch)
           });
         });
       });
 
-      // Сортировка по хронологии
-      collected.sort((a, b) => (this.sortOrder === 'asc' ? a.year - b.year : b.year - a.year));
+      const counter = document.getElementById('archive-found-counter');
+      if (counter) counter.textContent = `${items.length} экспонатов`;
 
-      // Обновляем счетчик найденных экспонатов
-      const counterEl = document.getElementById('archive-found-counter');
-      if (counterEl) counterEl.textContent = `${collected.length} шт.`;
-
-      if (collected.length === 0) {
-        container.className = 'catalog-empty-state';
-        container.innerHTML = `
+      if (items.length === 0) {
+        grid.className = 'catalog-empty-state';
+        grid.innerHTML = `
           <div class="empty-archive-box">
-            <span class="empty-icon">🔍</span>
-            <h3>В архивных фондах ничего не найдено</h3>
-            <p>Попробуйте сбросить фильтр или изменить поисковый запрос.</p>
+            <span class="empty-icon">🏛</span>
+            <h3>По вашему запросу экспонатов не найдено</h3>
+            <p>Попробуйте сбросить фильтры или выбрать другой поисковый тег.</p>
           </div>
         `;
         return;
       }
 
       if (this.viewMode === 'timeline') {
-        this.renderTimelineMode(container, collected);
+        items.sort((a, b) => a.year - b.year);
+        this.renderTimeline(grid, items);
       } else {
-        this.renderGridMode(container, collected);
+        this.renderGalleryGrid(grid, items);
       }
+
+      globalGalleryEnv?.bindTiltCards('.catalog-card');
     };
   }
 
-  renderGridMode(container, items) {
-    container.className = 'catalog-grid chrono-grid-mode';
+  renderGalleryGrid(container, items) {
+    container.className = 'catalog-grid clay-gallery-grid';
 
-    items.forEach(({ hall, spot }, idx) => {
+    items.forEach(({ hall, spot, has3D }) => {
       const card = document.createElement('div');
-      card.className = 'catalog-card holo-archive-card';
-      card.style.animationDelay = `${idx * 0.055}s`;
+      card.className = 'catalog-card clay-gallery-card';
 
-      const palette = this.hallColorMap[hall.id] || this.hallColorMap['college-history'];
-      card.style.setProperty('--card-hall-color', palette.color);
-      card.style.setProperty('--card-hall-bg', palette.bg);
-      card.style.setProperty('--card-hall-border', palette.border);
-
-      const previewImg = (spot.images && spot.images.length > 0)
+      const imgUrl = (spot.images && spot.images.length > 0)
         ? spot.images[0].url
         : (hall.bgImage || 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80');
 
-      const has3D = Boolean(spot.model3d && spot.model3d.trim() !== '');
-      const extraTags = (spot.extraInfo || []).slice(0, 2).map((info) =>
+      const metaTags = (spot.extraInfo || []).map((info) =>
         `<span class="card-meta-pill">${this.app.escapeHtml(info.label)}: <b>${this.app.escapeHtml(info.value)}</b></span>`
       ).join('');
 
       card.innerHTML = `
         <div class="card-media-box">
-          <img src="${previewImg}" alt="${this.app.escapeHtml(spot.title)}" class="card-img"
+          <img src="${imgUrl}" alt="${this.app.escapeHtml(spot.title)}" class="card-img"
                onerror="this.src='https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'">
-          <span class="card-hall-badge" style="color:${palette.color}; border-color:${palette.border}; background:${palette.bg};">
-            ${this.app.escapeHtml(hall.name)}
-          </span>
-          ${has3D ? '<span class="card-3d-badge">🧊 3D GLB</span>' : ''}
+          <span class="card-hall-badge">${this.app.escapeHtml(hall.name)}</span>
+          ${has3D ? '<span class="card-3d-badge">🧊 3D Модель</span>' : ''}
         </div>
         <div class="card-content">
-          <div class="card-epoch-row">
-            <span class="card-epoch">${this.app.escapeHtml(spot.epoch || 'Фонд ЛДПК')}</span>
-          </div>
+          <span class="card-epoch">${this.app.escapeHtml(spot.epoch || 'Архивный фонд')}</span>
           <h3 class="card-title">${this.app.escapeHtml(spot.title)}</h3>
           <p class="card-desc">${this.app.escapeHtml(spot.description || '')}</p>
-          ${extraTags ? `<div class="card-meta-pills">${extraTags}</div>` : ''}
-          <div class="card-action-btn">Открыть витрину в зале →</div>
+          ${metaTags ? `<div class="card-meta-pills">${metaTags}</div>` : ''}
+          <div class="card-action-btn">Перейти к витрине →</div>
         </div>
       `;
 
@@ -1110,40 +1087,42 @@ export class ChronoArchiveHub {
     });
   }
 
-  renderTimelineMode(container, items) {
+  renderTimeline(container, items) {
     container.className = 'chrono-timeline-wrapper';
 
-    const axisLine = document.createElement('div');
-    axisLine.className = 'chrono-timeline-axis';
-    container.appendChild(axisLine);
+    const headerBanner = document.createElement('div');
+    headerBanner.className = 'timeline-scale-header';
+    headerBanner.innerHTML = `<span>1941 • ОСНОВАНИЕ ДКТ</span><span class="scale-line"></span><span>2026 • ПРОФЕССИОНАЛИТЕТ</span>`;
+    container.appendChild(headerBanner);
 
-    items.forEach(({ hall, spot, year }, idx) => {
+    const axis = document.createElement('div');
+    axis.className = 'chrono-timeline-axis';
+    container.appendChild(axis);
+
+    items.forEach(({ hall, spot, has3D, year }, idx) => {
       const node = document.createElement('div');
       node.className = `timeline-node ${idx % 2 === 0 ? 'left' : 'right'}`;
-      node.style.animationDelay = `${idx * 0.065}s`;
 
-      const palette = this.hallColorMap[hall.id] || this.hallColorMap['college-history'];
-      const previewImg = (spot.images && spot.images.length > 0)
+      const imgUrl = (spot.images && spot.images.length > 0)
         ? spot.images[0].url
         : (hall.bgImage || 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80');
-      const has3D = Boolean(spot.model3d && spot.model3d.trim() !== '');
 
       node.innerHTML = `
-        <div class="timeline-year-marker" style="border-color:${palette.color}; color:${palette.color};">
-          <span>${year < 1941 ? 'XIX в.' : year}</span>
+        <div class="timeline-year-marker">
+          <span>${year}</span>
         </div>
-        <div class="timeline-card catalog-card" style="--card-hall-color:${palette.color};">
-          <img src="${previewImg}" alt="${this.app.escapeHtml(spot.title)}" class="timeline-thumb"
+        <div class="timeline-card catalog-card">
+          <img src="${imgUrl}" alt="${this.app.escapeHtml(spot.title)}" class="timeline-thumb"
                onerror="this.src='https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=600&q=80'">
           <div class="timeline-card-body">
             <div class="timeline-badges">
-              <span class="tl-hall-tag" style="color:${palette.color}; border-color:${palette.border};">${this.app.escapeHtml(hall.name)}</span>
+              <span class="tl-hall-tag">${this.app.escapeHtml(hall.name)}</span>
               <span class="tl-epoch-tag">${this.app.escapeHtml(spot.epoch)}</span>
               ${has3D ? '<span class="tl-3d-tag">🧊 3D</span>' : ''}
             </div>
             <h3 class="timeline-title">${this.app.escapeHtml(spot.title)}</h3>
             <p class="timeline-desc">${this.app.escapeHtml(spot.description)}</p>
-            <span class="timeline-teleport-link">Перейти к стенду →</span>
+            <span class="timeline-teleport-link">Открыть витрину в зале →</span>
           </div>
         </div>
       `;
@@ -1159,84 +1138,26 @@ export class ChronoArchiveHub {
 }
 
 /* ==========================================================================
-   ЗАДАЧА 4: ГЕЙМИФИКАЦИЯ «ЭКЗАМЕН НА ХРАНИТЕЛЯ МУЗЕЯ» (QUIZ BATTLE HUD)
+   МОДУЛЬ 4: ГЕЙМИФИКАЦИЯ ВИКТОРИНЫ (QUIZ 2.0 — РИМСКАЯ НУМЕРАЦИЯ & ГРАМОТА)
    ========================================================================== */
-export class QuizBattleHUD {
+export class NobleQuizV2 {
   constructor(appInstance) {
     this.app = appInstance;
-    this.xp = 0;
-    this.streak = 0;
-    this.maxStreak = 0;
-    this.timeLeft = 20;
-    this.timerInterval = null;
-    this.keeperName = localStorage.getItem('ldpk_keeper_name') || 'Илья Мазанов';
-    this.audioCtx = null;
-
+    this.romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+    this.visitorName = localStorage.getItem('ldpk_diploma_name') || 'Илья Мазанов';
     this.init();
   }
 
   init() {
     if (!this.app) return;
-
-    // Обновляем заголовок модального окна
-    const titleEl = document.getElementById('quiz-modal-title');
-    if (titleEl) titleEl.textContent = 'Испытание: Экзамен на Хранителя Музея';
-
-    // Перехватываем открытие, закрытие и рендер шагов викторины
-    const origOpenQuiz = this.app.openQuiz.bind(this.app);
-    this.app.openQuiz = () => {
-      this.xp = 0;
-      this.streak = 0;
-      this.maxStreak = 0;
-      origOpenQuiz();
-    };
-
-    const origCloseQuiz = this.app.closeQuiz.bind(this.app);
-    this.app.closeQuiz = () => {
-      this.stopTimer();
-      origCloseQuiz();
-    };
-
-    this.app.renderQuizStep = () => this.renderBattleStep();
+    this.app.renderQuizStep = () => this.renderNobleQuizStep();
   }
 
-  startQuestionTimer(onTimeOut) {
-    this.stopTimer();
-    this.timeLeft = 20;
-    const totalTime = 20;
-
-    const ringEl = document.getElementById('battle-timer-circle');
-    const textEl = document.getElementById('battle-timer-sec');
-    const circumference = 2 * Math.PI * 22; // r = 22 -> ~138.2
-
-    this.timerInterval = setInterval(() => {
-      this.timeLeft--;
-      if (textEl) textEl.textContent = `${this.timeLeft}с`;
-      if (ringEl) {
-        const offset = circumference - (this.timeLeft / totalTime) * circumference;
-        ringEl.style.strokeDashoffset = offset.toFixed(1);
-        if (this.timeLeft <= 5) {
-          ringEl.style.stroke = '#ef4444';
-          this.playTickSfx();
-        }
-      }
-
-      if (this.timeLeft <= 0) {
-        this.stopTimer();
-        if (typeof onTimeOut === 'function') onTimeOut();
-      }
-    }, 1000);
+  toRoman(num) {
+    return this.romanNumerals[num - 1] || String(num);
   }
 
-  stopTimer() {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
-  }
-
-  renderBattleStep() {
-    this.stopTimer();
+  renderNobleQuizStep() {
     const body = this.app.dom.quizBody;
     if (!body) return;
 
@@ -1245,461 +1166,167 @@ export class QuizBattleHUD {
     const idx = this.app.quizCurrentIndex;
 
     if (idx >= total) {
-      this.renderCertificateScreen(body, total);
+      this.renderOfficialGramota(body, total);
       return;
     }
 
     const currentQ = questions[idx];
-    const progressPercent = (idx / total) * 100;
+    const progressPercent = ((idx + 1) / total) * 100;
+    const romanCurrent = this.toRoman(idx + 1);
+    const romanTotal = this.toRoman(total);
 
     body.innerHTML = `
-      <!-- Верхний киберспортивный / музейный Battle HUD -->
-      <div class="battle-hud-bar">
-        <div class="hud-stat-pill xp-pill">
-          <span class="stat-label">ОПЫТ ХРАНИТЕЛЯ</span>
-          <strong class="stat-val" id="battle-xp-val">${this.xp} XP</strong>
-        </div>
-
-        <div class="hud-timer-widget" title="Время на ответ">
-          <svg class="timer-ring-svg" width="54" height="54" viewBox="0 0 54 54">
-            <circle cx="27" cy="27" r="22" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="none"/>
-            <circle id="battle-timer-circle" cx="27" cy="27" r="22" stroke="#38bdf8" stroke-width="4" fill="none"
-                    stroke-dasharray="138.2" stroke-dashoffset="0" stroke-linecap="round"/>
-          </svg>
-          <span id="battle-timer-sec" class="timer-sec-text">20с</span>
-        </div>
-
-        <div class="hud-stat-pill streak-pill ${this.streak >= 2 ? 'combo-hot' : ''}">
-          <span class="stat-label">СЕРИЯ ОТВЕТОВ</span>
-          <strong class="stat-val" id="battle-streak-val">
-            ${this.streak >= 2 ? `🔥 COMBO x\${this.streak}` : `x\${Math.max(1, this.streak)}`}
-          </strong>
-        </div>
+      <div class="quiz-v2-progress-header">
+        <span class="quiz-roman-counter">ВОПРОС ${romanCurrent} ИЗ ${romanTotal}</span>
+        <span class="quiz-score-live">Счёт: ${this.app.quizScore}</span>
       </div>
 
       <div class="quiz-progress-bar-wrap">
         <div class="quiz-progress-fill" style="width: ${progressPercent}%;"></div>
       </div>
 
-      <div class="quiz-question-number">АРХИВНЫЙ РУБЕЖ ${idx + 1} ИЗ ${total}</div>
       <h3 class="quiz-question-text">${this.app.escapeHtml(currentQ.question)}</h3>
 
       <div class="quiz-options-list">
-        ${currentQ.options.map((opt, i) => `
-          <button type="button" class="quiz-option-btn battle-opt-btn" data-opt-idx="${i}">
-            <span class="opt-key-index">0${i + 1}</span>
-            <span>${this.app.escapeHtml(opt)}</span>
+        ${currentQ.options.map((optText, i) => `
+          <button type="button" class="quiz-option-btn noble-opt-btn" data-opt-idx="${i}">
+            <span class="opt-roman-badge">${this.toRoman(i + 1)}</span>
+            <span class="opt-label-text">${this.app.escapeHtml(optText)}</span>
           </button>
         `).join('')}
       </div>
 
-      <div id="quiz-feedback-box"></div>
+      <div id="quiz-feedback-box" class="quiz-feedback-collapse"></div>
+
       <button type="button" id="quiz-action-next" class="quiz-next-btn" style="display: none;">
-        ${idx + 1 === total ? 'Завершить и получить сертификат →' : 'Следующий рубеж →'}
+        ${idx + 1 === total ? 'Оформить именную Грамоту →' : 'Следующий вопрос →'}
       </button>
     `;
 
-    const optionButtons = body.querySelectorAll('.quiz-option-btn');
+    const optionBtns = body.querySelectorAll('.quiz-option-btn');
     const feedbackBox = body.querySelector('#quiz-feedback-box');
     const nextBtn = body.querySelector('#quiz-action-next');
 
-    const finalizeAnswer = (selectedIdx) => {
-      this.stopTimer();
-      const isTimeout = selectedIdx === -1;
-      const isCorrect = selectedIdx === currentQ.correct;
-
-      optionButtons.forEach((b) => { b.disabled = true; });
-
-      if (isCorrect) {
-        optionButtons[selectedIdx].classList.add('correct');
-        this.app.quizScore++;
-        this.streak++;
-        if (this.streak > this.maxStreak) this.maxStreak = this.streak;
-
-        // Начисление XP с учетом комбо-множителя и бонуса за скорость
-        const speedBonus = Math.max(10, this.timeLeft * 5);
-        const gainedXp = (150 + speedBonus) * this.streak;
-        this.xp += gainedXp;
-
-        this.playAnswerSfx(true);
-        document.getElementById('battle-xp-val').textContent = `${this.xp} XP (+${gainedXp})`;
-        document.getElementById('battle-streak-val').textContent = `🔥 COMBO x${this.streak}`;
-      } else {
-        if (!isTimeout && optionButtons[selectedIdx]) {
-          optionButtons[selectedIdx].classList.add('wrong');
-        }
-        if (optionButtons[currentQ.correct]) {
-          optionButtons[currentQ.correct].classList.add('correct');
-        }
-        this.streak = 0;
-        this.playAnswerSfx(false);
-        document.getElementById('battle-streak-val').textContent = 'СБРОС x1';
-      }
-
-      if (feedbackBox) {
-        feedbackBox.innerHTML = `
-          <div class="quiz-explanation-box">
-            <strong>${isCorrect ? '✓ Доступ подтвержден!' : isTimeout ? '⏱ Время вышло!' : '✕ Архивная справка:'}</strong>
-            ${this.app.escapeHtml(currentQ.explanation)}
-          </div>
-        `;
-      }
-
-      if (nextBtn) nextBtn.style.display = 'block';
-    };
-
-    optionButtons.forEach((btn) => {
+    optionBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
-        const chosen = parseInt(btn.getAttribute('data-opt-idx'), 10);
-        finalizeAnswer(chosen);
+        const chosenIdx = parseInt(btn.getAttribute('data-opt-idx'), 10);
+        const isCorrect = chosenIdx === currentQ.correct;
+
+        optionBtns.forEach((b) => { b.disabled = true; });
+
+        if (isCorrect) {
+          btn.classList.add('correct');
+          this.app.quizScore++;
+        } else {
+          btn.classList.add('wrong');
+          if (optionBtns[currentQ.correct]) {
+            optionBtns[currentQ.correct].classList.add('correct');
+          }
+        }
+
+        globalSoundEngine?.playQuizFeedback(isCorrect);
+
+        if (feedbackBox) {
+          feedbackBox.innerHTML = `
+            <div class="quiz-explanation-box ${isCorrect ? 'exp-emerald' : 'exp-terracotta'}">
+              <div class="exp-header">
+                ${isCorrect ? '✦ Ответ верный • Историческая справка' : '✦ Историческая справка музея'}
+              </div>
+              <p>${this.app.escapeHtml(currentQ.explanation)}</p>
+            </div>
+          `;
+        }
+
+        if (nextBtn) nextBtn.style.display = 'block';
       });
     });
 
     if (nextBtn) {
       nextBtn.addEventListener('click', () => {
         this.app.quizCurrentIndex++;
-        this.renderBattleStep();
+        this.renderNobleQuizStep();
       });
     }
-
-    this.startQuestionTimer(() => finalizeAnswer(-1));
   }
 
   /**
-   * Экран персонального сертификата «Знаток истории ЛДПК» + микро-конфетти на Canvas
+   * Финал Викторины 2.0: Электронная именная «Грамота знатока истории ЛДПК» с печатью музея
    */
-  renderCertificateScreen(body, total) {
+  renderOfficialGramota(body, total) {
     const score = this.app.quizScore;
-    const ratio = score / total;
+    const pct = Math.round((score / total) * 100);
 
-    let rankTitle = 'Кандидат-исследователь ЛДПК';
-    let rankBadge = 'БРОНЗОВЫЙ ДОПУСК';
-    if (ratio === 1) {
-      rankTitle = 'Магистр-Хранитель Фондов ЛДПК';
-      rankBadge = 'ЗОЛОТОЙ ОРДЕН ХРАНИТЕЛЯ';
-    } else if (ratio >= 0.8) {
-      rankTitle = 'Почётный краевед и знаток ЛДПК';
-      rankBadge = 'СЕРЕБРЯНЫЙ ДОПУСК';
+    let honorStatus = 'Слушатель исторического курса ЛДПК';
+    if (score === total) {
+      honorStatus = 'Почётный Хранитель истории ЛДПК I степени';
+    } else if (score >= total - 1) {
+      honorStatus = 'Знаток истории и наследия ЛДПК';
     }
 
-    const certCode = `LDPK-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const dateStr = new Date().toLocaleDateString('ru-RU', {
+      day: '2-digit', month: 'long', year: 'numeric'
+    });
 
     body.innerHTML = `
-      <div class="cert-stage-wrapper">
-        <canvas id="quiz-confetti-canvas" class="quiz-confetti-canvas"></canvas>
+      <div class="gramota-parchment-card">
+        <div class="gramota-inner-frame">
+          <div class="gramota-top-crest">ГГТУ • ЛИКИНО-ДУЛЁВСКИЙ ПОЛИТЕХНИЧЕСКИЙ КОЛЛЕДЖ</div>
+          <h3 class="gramota-main-title">ГРАМОТА</h3>
+          <div class="gramota-subtitle">ЗНАТОКА ИСТОРИИ ЛДПК</div>
 
-        <div class="keeper-certificate-card" id="keeper-certificate-card">
-          <div class="cert-header-row">
-            <span class="cert-seal-badge">${rankBadge}</span>
-            <span class="cert-id-code">ID: ${certCode}</span>
+          <div class="gramota-recipient-block">
+            <label for="gramota-name-input" class="gramota-label">Настоящая грамота вручается:</label>
+            <input type="text" id="gramota-name-input" class="gramota-name-input"
+                   value="${this.app.escapeHtml(this.visitorName)}" placeholder="Введите Фамилию и Имя">
           </div>
 
-          <h3 class="cert-main-heading">СЕРТИФИКАТ ЗНАТОКА ИСТОРИИ ЛДПК</h3>
-          <p class="cert-sub-caption">Ликино-Дулёвский политехнический колледж • Хроника 1941–2026</p>
+          <p class="gramota-body-text">
+            за глубокие знания летописи колледжа (1941–2026 гг.), индустриального наследия края
+            и бережное отношение к исторической памяти.
+          </p>
 
-          <div class="cert-owner-input-row">
-            <label for="cert-keeper-input">Владелец сертификата:</label>
-            <input type="text" id="cert-keeper-input" class="cert-name-input" value="${this.app.escapeHtml(this.keeperName)}" placeholder="Введите ваше имя">
-          </div>
+          <div class="gramota-rank-pill">${honorStatus}</div>
 
-          <div class="cert-Assigned-rank">${rankTitle}</div>
-
-          <div class="cert-metrics-grid">
-            <div class="cert-metric">
-              <span>ТОЧНОСТЬ</span>
-              <strong>${score} / ${total} (${Math.round(ratio * 100)}%)</strong>
+          <div class="gramota-footer-row">
+            <div class="gramota-score-box">
+              <span>ИТОГОВЫЙ БАЛЛ</span>
+              <strong>${score} из ${total} (${pct}%)</strong>
+              <small>${dateStr}</small>
             </div>
-            <div class="cert-metric">
-              <span>РЕЙТИНГ XP</span>
-              <strong>${this.xp} XP</strong>
-            </div>
-            <div class="cert-metric">
-              <span>МАКС. СЕРИЯ</span>
-              <strong>COMBO x${Math.max(1, this.maxStreak)}</strong>
+
+            <!-- Векторная гербовая печать музея ЛДПК -->
+            <div class="museum-official-seal" title="Официальная печать экспозиции">
+              <svg viewBox="0 0 120 120" class="seal-svg">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 2"/>
+                <circle cx="60" cy="60" r="46" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="60" cy="60" r="28" fill="none" stroke="currentColor" stroke-width="1"/>
+                <text x="60" y="30" text-anchor="middle" font-size="8" font-weight="700" letter-spacing="1.5" fill="currentColor">МУЗЕЙ ИСТОРИИ</text>
+                <text x="60" y="64" text-anchor="middle" font-size="14" font-weight="800" letter-spacing="2" fill="currentColor">ЛДПК</text>
+                <text x="60" y="76" text-anchor="middle" font-size="7" font-weight="600" fill="currentColor">1941–2026</text>
+                <text x="60" y="96" text-anchor="middle" font-size="7.5" font-weight="700" letter-spacing="1" fill="currentColor">ФОНД НАСЛЕДИЯ</text>
+              </svg>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="cert-actions-row">
-          <button type="button" id="btn-copy-cert" class="quiz-next-btn cert-share-btn">
-            📋 Скопировать результат для отправки
-          </button>
-          <button type="button" id="quiz-restart-btn" class="btn-cert-retry">
-            ↻ Пройти заново
-          </button>
-        </div>
+      <div class="gramota-actions-bar">
+        <button type="button" id="quiz-restart-btn" class="quiz-next-btn">
+          Пройти снова
+        </button>
       </div>
     `;
 
-    // Сохранение имени в сертификате
-    const nameInput = document.getElementById('cert-keeper-input');
-    nameInput?.addEventListener('input', (e) => {
-      this.keeperName = e.target.value.trim() || 'Посетитель музея';
-      localStorage.setItem('ldpk_keeper_name', this.keeperName);
-    });
-
-    // Кнопка копирования / шаринга сертификата
-    const copyBtn = document.getElementById('btn-copy-cert');
-    copyBtn?.addEventListener('click', async () => {
-      const shareText =
-        `🏛 Сертификат «Виртуального музея ЛДПК» (${certCode})\n` +
-        `👤 Хранитель: ${this.keeperName}\n` +
-        `🏅 Звание: ${rankTitle}\n` +
-        `📊 Результат: ${score}/${total} (${this.xp} XP, макс. серия x${Math.max(1, this.maxStreak)})`;
-
-      try {
-        await navigator.clipboard.writeText(shareText);
-        copyBtn.textContent = '✓ Результат скопирован в буфер обмена!';
-        setTimeout(() => {
-          copyBtn.textContent = '📋 Скопировать результат для отправки';
-        }, 2800);
-      } catch (e) {}
+    const nameInp = document.getElementById('gramota-name-input');
+    nameInp?.addEventListener('input', (e) => {
+      this.visitorName = e.target.value.trim() || 'Посетитель музея';
+      localStorage.setItem('ldpk_diploma_name', this.visitorName);
     });
 
     document.getElementById('quiz-restart-btn')?.addEventListener('click', () => {
-      this.xp = 0;
-      this.streak = 0;
-      this.maxStreak = 0;
       this.app.quizCurrentIndex = 0;
       this.app.quizScore = 0;
-      this.renderBattleStep();
-    });
-
-    // Запускаем победный аккорд и конфетти при высоком результате
-    if (ratio >= 0.6) {
-      this.playVictoryFanfare();
-      this.launchConfettiCanvas();
-    }
-  }
-
-  launchConfettiCanvas() {
-    const canvas = document.getElementById('quiz-confetti-canvas');
-    if (!canvas || document.body.classList.contains('lite-mode')) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width = canvas.parentElement.clientWidth || 560;
-    canvas.height = canvas.parentElement.clientHeight || 380;
-
-    const colors = ['#38bdf8', '#fbbf24', '#10b981', '#c084fc', '#f87171'];
-    const pieces = Array.from({ length: 65 }, () => ({
-      x: canvas.width * 0.5 + (Math.random() - 0.5) * 120,
-      y: canvas.height * 0.35,
-      vx: (Math.random() - 0.5) * 9,
-      vy: -4 - Math.random() * 6,
-      size: 4 + Math.random() * 5,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rot: Math.random() * Math.PI,
-      vRot: (Math.random() - 0.5) * 0.2,
-      alpha: 1
-    }));
-
-    let frame = 0;
-    const render = () => {
-      frame++;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      let alive = false;
-
-      pieces.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.18; // Гравитация
-        p.rot += p.vRot;
-        p.alpha = Math.max(0, 1 - frame / 110);
-
-        if (p.alpha > 0.02) {
-          alive = true;
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.rot);
-          ctx.globalAlpha = p.alpha;
-          ctx.fillStyle = p.color;
-          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-          ctx.restore();
-        }
-      });
-
-      if (alive) requestAnimationFrame(render);
-    };
-    requestAnimationFrame(render);
-  }
-
-  /* ==========================================================================
-     ТАКТИЛЬНЫЙ АУДИО-СИНТЕЗАТОР ВИКТОРИНЫ (WEB AUDIO API)
-     ========================================================================== */
-  ensureAudio() {
-    if (localStorage.getItem('museum_sfx_muted') === 'true') return null;
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!this.audioCtx && AudioCtx) this.audioCtx = new AudioCtx();
-    if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume().catch(() => {});
-    }
-    return this.audioCtx;
-  }
-
-  playAnswerSfx(isCorrect) {
-    const ctx = this.ensureAudio();
-    if (!ctx) return;
-
-    try {
-      const now = ctx.currentTime;
-      if (isCorrect) {
-        // Победный восходящий синтез с повышением тона от комбо
-        const pitchBoost = Math.min(300, this.streak * 45);
-        [523.25 + pitchBoost, 659.25 + pitchBoost, 783.99 + pitchBoost].forEach((freq, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(freq, now + i * 0.055);
-          gain.gain.setValueAtTime(0.06, now + i * 0.055);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.22);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + i * 0.055);
-          osc.stop(now + i * 0.055 + 0.24);
-        });
-      } else {
-        // Тактильный низкий баззер ошибки
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(165, now);
-        osc.frequency.linearRampToValueAtTime(115, now + 0.28);
-        gain.gain.setValueAtTime(0.055, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.32);
-      }
-    } catch (e) {}
-  }
-
-  playTickSfx() {
-    const ctx = this.ensureAudio();
-    if (!ctx) return;
-    try {
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1200, now);
-      gain.gain.setValueAtTime(0.025, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.035);
-    } catch (e) {}
-  }
-
-  playVictoryFanfare() {
-    const ctx = this.ensureAudio();
-    if (!ctx) return;
-    try {
-      const now = ctx.currentTime;
-      [440, 554.37, 659.25, 880].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + i * 0.08);
-        gain.gain.setValueAtTime(0.05, now + i * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.0008, now + i * 0.08 + 0.65);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now + i * 0.08);
-        osc.stop(now + i * 0.08 + 0.7);
-      });
-    } catch (e) {}
-  }
-}
-
-/* ==========================================================================
-   ГОЛОГРАФИЧЕСКИЙ СКАНЕР ЭКСПОНАТА (X-RAY HOLOGRAM INSPECTOR)
-   ========================================================================== */
-export class HologramXRayInspector {
-  constructor(appInstance) {
-    this.app = appInstance;
-    this.isActive = false;
-    this.audioCtx = null;
-    this.init();
-  }
-
-  init() {
-    const headerBar = document.querySelector('.drawer-header-bar');
-    const mediaBox = document.querySelector('.drawer-media-box');
-    if (!headerBar || !mediaBox || document.getElementById('btn-xray-scanner')) return;
-
-    this.toggleBtn = document.createElement('button');
-    this.toggleBtn.type = 'button';
-    this.toggleBtn.id = 'btn-xray-scanner';
-    this.toggleBtn.className = 'xray-toggle-btn';
-    this.toggleBtn.innerHTML = `<span class="xray-led"></span><span>РЕНТГЕН-СКАНЕР</span>`;
-    this.toggleBtn.addEventListener('click', () => this.toggleScanner());
-
-    const closeBtn = document.getElementById('drawer-close');
-    headerBar.insertBefore(this.toggleBtn, closeBtn);
-
-    this.overlay = document.createElement('div');
-    this.overlay.id = 'xray-hologram-overlay';
-    this.overlay.className = 'xray-hologram-overlay';
-    this.overlay.innerHTML = `
-      <div class="xray-scanline-laser"></div>
-      <div class="xray-grid-mesh"></div>
-      <div class="xray-telemetry-hud">
-        <span>SPECTRAL_ANALYSIS // ACTIVE</span>
-        <span id="xray-epoch-code">DEPTH_SCAN: 99.4%</span>
-      </div>
-      <div id="xray-hotspots-container" class="xray-hotspots-container"></div>
-    `;
-
-    mediaBox.appendChild(this.overlay);
-    this.hotspotsContainer = document.getElementById('xray-hotspots-container');
-    this.mediaBox = mediaBox;
-  }
-
-  toggleScanner(forceState) {
-    this.isActive = typeof forceState === 'boolean' ? forceState : !this.isActive;
-    if (!this.toggleBtn || !this.overlay) return;
-
-    this.toggleBtn.classList.toggle('active', this.isActive);
-    this.overlay.classList.toggle('active', this.isActive);
-    this.mediaBox.classList.toggle('xray-mode-active', this.isActive);
-
-    if (this.isActive) {
-      this.renderSpotAnnotations(this.app?.currentSpot);
-    }
-  }
-
-  renderSpotAnnotations(spot) {
-    if (!this.hotspotsContainer || !spot) return;
-    this.hotspotsContainer.innerHTML = '';
-
-    const baseAnnotations = (spot.extraInfo && spot.extraInfo.length > 0)
-      ? spot.extraInfo.map((info) => ({ label: info.label, value: info.value }))
-      : [{ label: 'Эпоха', value: spot.epoch || 'XX–XXI вв.' }];
-
-    const notes = [...baseAnnotations, { label: 'Статус фонда', value: 'Подлинник ЛДПК' }].slice(0, 3);
-    const coords = [
-      { x: 24, y: 34, side: 'right' },
-      { x: 68, y: 46, side: 'left' },
-      { x: 38, y: 74, side: 'right' }
-    ];
-
-    notes.forEach((note, idx) => {
-      const pos = coords[idx % coords.length];
-      const node = document.createElement('div');
-      node.className = `xray-annotation-node side-${pos.side}`;
-      node.style.left = `${pos.x}%`;
-      node.style.top = `${pos.y}%`;
-      node.innerHTML = `
-        <button type="button" class="xray-target-pin"><span class="pin-ring"></span><span class="pin-core"></span></button>
-        <div class="xray-callout-box">
-          <div class="xray-callout-content">
-            <span class="xray-callout-label">${note.label}</span>
-            <strong class="xray-callout-val">${note.value}</strong>
-          </div>
-        </div>
-      `;
-      this.hotspotsContainer.appendChild(node);
+      this.renderNobleQuizStep();
     });
   }
 }
@@ -1709,21 +1336,19 @@ export class HologramXRayInspector {
    ========================================================================== */
 export function initDigitalTwinAndScanner(appInstance) {
   const digitalTwinMap = new Museum3DMap(appInstance);
-  const chronoArchive = new ChronoArchiveHub(appInstance);
-  const quizBattle = new QuizBattleHUD(appInstance);
-  const xrayInspector = new HologramXRayInspector(appInstance);
+  const catalogV2 = new ChronoArchiveCatalogV2(appInstance);
+  const quizV2 = new NobleQuizV2(appInstance);
 
   if (!appInstance) {
-    return { digitalTwinMap, chronoArchive, quizBattle, xrayInspector };
+    return { digitalTwinMap, catalogV2, quizV2 };
   }
 
-  // Синхронизация 3D-карты и маяка «ВЫ ЗДЕСЬ» при открытии плана
   const origOpenMap = appInstance.openMap.bind(appInstance);
   appInstance.openMap = function () {
     origOpenMap();
-    digitalTwinMap.rebuildVitrineObelisks();
+    digitalTwinMap.rebuildBrassPedestals();
     digitalTwinMap.highlightActiveHall(appInstance.currentHall?.id);
-    digitalTwinMap.animateCameraToDefault();
+    digitalTwinMap.resetCameraView();
     digitalTwinMap.syncRenderMode();
   };
 
@@ -1733,12 +1358,11 @@ export function initDigitalTwinAndScanner(appInstance) {
     digitalTwinMap.stopLoop();
   };
 
-  // Автоматическое перемещение маяка «ВЫ ЗДЕСЬ» при смене зала в шапке
   const origFinishHall = appInstance.finishHallTransition.bind(appInstance);
   appInstance.finishHallTransition = function (hall, targetVitrineId = null) {
     origFinishHall(hall, targetVitrineId);
     digitalTwinMap.highlightActiveHall(hall.id);
   };
 
-  return { digitalTwinMap, chronoArchive, quizBattle, xrayInspector };
+  return { digitalTwinMap, catalogV2, quizV2 };
 }

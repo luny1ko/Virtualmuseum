@@ -1,0 +1,1021 @@
+/* museum-v2.css — ARCHITECTURAL CLAY & MODERN GALLERY (ВЕРСИЯ 2.0) */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Благородная архитектурная палитра: тёплый гипс, слоновая кость, латунь, эспрессо */
+  --clay-ivory: #f4efe6;
+  --clay-plaster: #e6dfd3;
+  --clay-sand: #cfc5b4;
+  --clay-muted: #a69c8e;
+
+  --gallery-charcoal: #161412;
+  --gallery-espresso: #1f1c18;
+  --gallery-panel: rgba(28, 25, 22, 0.90);
+  --gallery-border: rgba(197, 160, 89, 0.24);
+
+  --brass-gold: #c5a059;
+  --brass-bright: #dfc17b;
+  --brass-rgb: 197, 160, 89;
+
+  --museum-emerald: #2d6a4f;
+  --museum-emerald-light: #52b788;
+  --museum-terracotta: #9b3d2b;
+  --museum-terracotta-light: #e07a5f;
+
+  /* Переопределение базовых переменных styles.css без поломки верстки */
+  --color-bg-base: #161412;
+  --color-bg-surface: #1f1c18;
+  --color-glass-surface: rgba(28, 25, 22, 0.84);
+  --color-glass-border: rgba(197, 160, 89, 0.24);
+  --color-accent: #c5a059;
+  --color-accent-rgb: 197, 160, 89;
+  --color-gold: #dfc17b;
+  --color-text-main: #f4efe6;
+  --color-text-muted: #b5aba0;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ==========================================================================
+   БАЗОВЫЙ ИНТЕРЬЕРНЫЙ СТИЛЬ ШАПКИ, ХОТСПОТОВ И DRAWER ВИТРИНЫ
+   ========================================================================== */
+.brand-badge,
+.nav-capsule,
+.header-action-btn,
+.status-indicator,
+.admin-entry-link {
+  background: var(--gallery-panel) !important;
+  border: 1px solid var(--gallery-border) !important;
+  box-shadow: 0 12px 32px rgba(10, 8, 6, 0.55) !important;
+  color: var(--clay-ivory);
+}
+
+.brand-badge .badge-title {
+  font-family: var(--font-display);
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--clay-ivory);
+}
+
+.nav-active-pill {
+  background: linear-gradient(135deg, rgba(197, 160, 89, 0.28) 0%, rgba(197, 160, 89, 0.10) 100%) !important;
+  border: 1px solid rgba(223, 193, 123, 0.55) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.header-action-btn.active {
+  background: rgba(197, 160, 89, 0.22) !important;
+  border-color: var(--brass-bright) !important;
+  color: var(--clay-ivory) !important;
+}
+
+.header-action-btn.sfx-muted .sfx-wave {
+  opacity: 0.2;
+}
+
+/* Благородные латунные маркеры витрин на панораме */
+.hotspot-beacon .core-dot {
+  background-color: var(--brass-bright) !important;
+  border: 2px solid var(--clay-ivory);
+  box-shadow: 0 0 14px rgba(197, 160, 89, 0.85) !important;
+}
+
+.hotspot-beacon .ripple-ring {
+  border: 1.5px solid var(--brass-gold) !important;
+}
+
+.hotspot-tooltip {
+  background: rgba(26, 23, 20, 0.96) !important;
+  border: 1px solid var(--brass-gold) !important;
+  color: var(--clay-ivory) !important;
+  font-family: var(--font-main);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Шторка витрины (Drawer) в галерейном стиле */
+.exhibit-drawer {
+  background: rgba(25, 22, 19, 0.96) !important;
+  border-left: 1px solid var(--gallery-border) !important;
+}
+
+.drawer-title {
+  font-family: var(--font-display);
+  font-size: 1.85rem !important;
+  font-weight: 700;
+  color: var(--clay-ivory) !important;
+  letter-spacing: 0.01em;
+}
+
+.drawer-divider {
+  background: var(--brass-gold) !important;
+}
+
+.epoch-badge {
+  background: rgba(24, 21, 18, 0.88) !important;
+  border: 1px solid var(--brass-gold) !important;
+  color: var(--brass-bright) !important;
+}
+
+.audioguide-btn {
+  background: linear-gradient(135deg, rgba(197, 160, 89, 0.24) 0%, rgba(140, 108, 48, 0.18) 100%) !important;
+  border: 1px solid var(--brass-gold) !important;
+  color: var(--clay-ivory) !important;
+}
+
+.audioguide-btn:hover {
+  background: linear-gradient(135deg, rgba(197, 160, 89, 0.38) 0%, rgba(140, 108, 48, 0.28) 100%) !important;
+  box-shadow: 0 8px 24px rgba(197, 160, 89, 0.28) !important;
+}
+
+/* ==========================================================================
+   МОДУЛЬ 1: ИНТРО-ПРЕЛОАДЕР «АРХИВНАЯ ЛЕТОПИСЬ» (3D КНИГА)
+   ========================================================================== */
+.book-preloader-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: radial-gradient(circle at 50% 42%, #2a241e 0%, #12100e 80%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.book-preloader-overlay.fade-out-cinematic {
+  opacity: 0;
+  transform: scale(1.06);
+  pointer-events: none;
+}
+
+.book-ambient-spotlight {
+  position: absolute;
+  width: 760px;
+  height: 760px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(197, 160, 89, 0.16) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.book-stage-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 94vw;
+  max-width: 860px;
+}
+
+.book-stage-header {
+  text-align: center;
+}
+
+.book-museum-subtitle {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: var(--brass-gold);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.book-museum-main-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  color: var(--clay-ivory);
+  letter-spacing: 0.04em;
+}
+
+/* 3D Сцена книги */
+.archival-book-3d {
+  position: relative;
+  width: 340px;
+  height: 430px;
+  perspective: 2000px;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* При открытии смещаем книгу вправо, чтобы разворот встал ровно по центру экрана */
+.archival-book-3d.book-opened {
+  transform: translateX(50%) rotateX(8deg);
+}
+
+.book-base-left,
+.book-base-right {
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  width: calc(100% + 10px);
+  background: #2b1d16;
+  border: 2px solid #8a6d3b;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.85);
+}
+
+.book-base-left {
+  right: 100%;
+  border-radius: 10px 0 0 10px;
+  padding: 14px;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.2s;
+}
+
+.archival-book-3d.book-opened .book-base-left {
+  opacity: 1;
+}
+
+.left-spread-inner {
+  width: 100%;
+  height: 100%;
+  background: #ebe4d6;
+  border: 1px solid #c5b89e;
+  border-radius: 4px;
+  padding: 28px 24px;
+  color: #2b2621;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  box-shadow: inset -14px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.spread-crest {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  color: #8a6d3b;
+}
+
+.left-spread-inner h4 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  color: #1f1b17;
+  margin-bottom: 12px;
+}
+
+.left-spread-inner p {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #4a4238;
+}
+
+.spread-signature {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(138, 109, 59, 0.35);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: #6e5a34;
+}
+
+.book-base-right {
+  left: 0;
+  border-radius: 0 10px 10px 0;
+}
+
+.book-spine {
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: -14px;
+  width: 28px;
+  background: linear-gradient(90deg, #1f140f, #3d281d 50%, #1f140f);
+  border-top: 2px solid var(--brass-gold);
+  border-bottom: 2px solid var(--brass-gold);
+  z-index: 5;
+}
+
+/* Твёрдая лицевая обложка и переворачивающиеся листы */
+.book-front-cover,
+.book-sheet {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 1.05s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.book-front-cover.flipped {
+  transform: rotateY(-179deg);
+}
+
+.book-sheet.flipped {
+  transform: rotateY(-177deg);
+}
+
+.cover-face,
+.sheet-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 0 8px 8px 0;
+}
+
+.cover-front-outer {
+  background: radial-gradient(circle at 35% 30%, #3a261c 0%, #1e130e 100%);
+  border: 2px solid var(--brass-gold);
+  padding: 18px;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 10px 15px 35px rgba(0, 0, 0, 0.65);
+}
+
+.cover-gold-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid rgba(223, 193, 123, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  text-align: center;
+}
+
+.cover-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--brass-bright);
+  border-style: solid;
+}
+.cover-corner.tl { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+.cover-corner.tr { top: 6px; right: 6px; border-width: 2px 2px 0 0; }
+.cover-corner.bl { bottom: 6px; left: 6px; border-width: 0 0 2px 2px; }
+.cover-corner.br { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+
+.cover-top-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  color: var(--brass-gold);
+  margin-bottom: 18px;
+}
+
+.cover-emblem-medallion {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 2px solid var(--brass-bright);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  background: radial-gradient(circle, rgba(197, 160, 89, 0.25), transparent 70%);
+  box-shadow: 0 0 20px rgba(197, 160, 89, 0.25);
+}
+
+.medallion-inner {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  color: var(--brass-bright);
+}
+
+.cover-embossed-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+  color: var(--brass-bright);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85);
+  margin-bottom: 16px;
+}
+
+.cover-years-band {
+  padding: 5px 16px;
+  border-top: 1px solid rgba(223, 193, 123, 0.5);
+  border-bottom: 1px solid rgba(223, 193, 123, 0.5);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--clay-ivory);
+  margin-bottom: auto;
+}
+
+.cover-bottom-caption {
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: var(--clay-muted);
+}
+
+.cover-front-inner {
+  background: #efe8da;
+  transform: rotateY(180deg);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px 0 0 8px;
+  box-shadow: inset -12px 0 22px rgba(0, 0, 0, 0.15);
+}
+
+.exlibris-card {
+  width: 100%;
+  height: 100%;
+  border: 2px double #9c7e44;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #2b241d;
+  gap: 10px;
+}
+
+.exlibris-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: #8a6d3b;
+  font-weight: 700;
+}
+
+/* Архивные листы книги */
+.sheet-front {
+  background: linear-gradient(90deg, #e5dccb 0%, #f5efe4 12%, #f2ece1 100%);
+  padding: 18px;
+  color: #211d19;
+  box-shadow: inset 10px 0 18px rgba(0, 0, 0, 0.08), 4px 0 12px rgba(0, 0, 0, 0.25);
+}
+
+.sheet-back {
+  background: linear-gradient(270deg, #e5dccb 0%, #f3ede2 14%, #efe8dc 100%);
+  transform: rotateY(180deg);
+  padding: 18px;
+  color: #211d19;
+  border-radius: 8px 0 0 8px;
+}
+
+.sheet-ornament-border {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #c4b497;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-header-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #7c6741;
+  margin-bottom: 18px;
+}
+
+.sheet-year-emblem {
+  font-family: var(--font-display);
+  font-size: 2.9rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #8a6829;
+  text-align: center;
+  margin: 6px 0 12px 0;
+}
+
+.sheet-brass-divider {
+  width: 56px;
+  height: 2px;
+  background: #b08d48;
+  margin: 0 auto 16px auto;
+}
+
+.sheet-milestone-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #1a1714;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.sheet-milestone-desc {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #463f37;
+  text-align: center;
+}
+
+.sheet-footer-stamp {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(160, 138, 98, 0.35);
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: #847356;
+  font-weight: 600;
+}
+
+.back-pattern {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.back-watermark {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: rgba(138, 104, 41, 0.35);
+  letter-spacing: 0.12em;
+}
+
+.back-seal-ornament {
+  font-size: 1.5rem;
+  color: #9e7d3b;
+}
+
+.back-quote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.98rem;
+  color: #5c5144;
+  max-width: 220px;
+}
+
+/* Нижняя панель управления книгой */
+.book-controls-Dock {
+  width: 100%;
+  max-width: 560px;
+  background: rgba(26, 23, 20, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--gallery-border);
+  border-radius: 16px;
+  padding: 18px 24px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+}
+
+.book-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--clay-plaster);
+  margin-bottom: 8px;
+}
+
+.book-progress-percent {
+  font-weight: 700;
+  color: var(--brass-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.book-progress-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.book-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #9c7a38, var(--brass-bright));
+  transition: width 0.45s ease;
+}
+
+.book-enter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-enter-exposition {
+  position: relative;
+  flex: 1;
+  padding: 13px 22px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(197, 160, 89, 0.25);
+  color: var(--clay-muted);
+  font-family: var(--font-main);
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: not-allowed;
+  transition: all 0.35s ease;
+}
+
+.btn-enter-exposition.ready {
+  cursor: pointer;
+  background: linear-gradient(135deg, #c5a059 0%, #9e7832 100%);
+  border-color: #f3dc99;
+  color: #161310;
+  font-weight: 700;
+  box-shadow: 0 0 28px rgba(197, 160, 89, 0.55);
+}
+
+.btn-enter-exposition.ready:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(223, 193, 123, 0.75);
+}
+
+.btn-skip-book {
+  padding: 13px 16px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: var(--clay-muted);
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-skip-book:hover {
+  color: var(--clay-ivory);
+  border-color: var(--brass-gold);
+}
+
+.btn-skip-book kbd {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 740px) {
+  .archival-book-3d.book-opened {
+    transform: translateX(0) scale(0.88);
+  }
+  .book-base-left {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   МОДУЛЬ 2: THREE.JS 3D-МАКЕТ ЗДАНИЯ (ARCHITECTURAL CLAY MAQUETTE)
+   ========================================================================== */
+.map-modal {
+  background: rgba(24, 21, 19, 0.96) !important;
+  border: 1px solid var(--gallery-border) !important;
+}
+
+.map-canvas-wrapper.clay-maquette-stage {
+  background: radial-gradient(circle at 50% 45%, #26221e 0%, #151311 85%) !important;
+  border: 1px solid rgba(197, 160, 89, 0.28) !important;
+}
+
+.three-vitrine-tooltip.clay-tooltip {
+  background: rgba(244, 239, 230, 0.97) !important;
+  border: 1.5px solid #9e7832 !important;
+  color: #1f1b18 !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65) !important;
+}
+
+.three-vitrine-tooltip.clay-tooltip .tt-hall {
+  color: #8a6829 !important;
+}
+
+.three-vitrine-tooltip.clay-tooltip .tt-title {
+  color: #181512 !important;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.three-vitrine-tooltip.clay-tooltip .tt-epoch {
+  color: #5c5144 !important;
+}
+
+/* ==========================================================================
+   МОДУЛЬ 3: КАТАЛОГ 2.0 (ГАЛЕРЕЯ 3D-TILT & ХРОНОЛОГИЧЕСКАЯ ОСЬ 1941–2026)
+   ========================================================================== */
+.catalog-sheet {
+  background: rgba(24, 21, 18, 0.97) !important;
+  border-top: 1px solid var(--gallery-border) !important;
+  height: 76vh !important;
+}
+
+.chrono-archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 28px;
+  background: rgba(18, 16, 14, 0.92);
+  border-bottom: 1px solid var(--gallery-border);
+}
+
+.archive-search-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.Quick-tags-row,
+.quick-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quick-tags-label {
+  font-size: 0.72rem;
+  color: var(--clay-muted);
+}
+
+.quick-search-tag {
+  padding: 3px 10px;
+  background: rgba(197, 160, 89, 0.08);
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  border-radius: 999px;
+  color: var(--clay-plaster);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-search-tag:hover,
+.quick-search-tag.active {
+  background: var(--brass-gold);
+  color: #161310;
+  font-weight: 600;
+}
+
+.archive-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.clay-gallery-card {
+  position: relative;
+  background: rgba(244, 239, 230, 0.04) !important;
+  border: 1px solid rgba(197, 160, 89, 0.22) !important;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.clay-specular-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 5;
+}
+
+.timeline-scale-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  background: rgba(197, 160, 89, 0.1);
+  border: 1px solid var(--gallery-border);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--brass-bright);
+}
+
+.timeline-scale-header .scale-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(197, 160, 89, 0.35);
+}
+
+/* ==========================================================================
+   МОДУЛЬ 4: ВИКТОРИНА 2.0 И ИМЕННАЯ «ГРАМОТА ЗНАТОКА ИСТОРИИ ЛДПК»
+   ========================================================================== */
+.quiz-modal {
+  background: rgba(25, 22, 19, 0.97) !important;
+  border: 1px solid var(--gallery-border) !important;
+}
+
+.quiz-v2-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.quiz-roman-counter {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--brass-bright);
+}
+
+.quiz-score-live {
+  font-size: 0.78rem;
+  color: var(--clay-muted);
+}
+
+.quiz-progress-fill {
+  background: linear-gradient(90deg, #8a6829 0%, var(--brass-bright) 100%) !important;
+}
+
+.noble-opt-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(244, 239, 230, 0.04) !important;
+  border: 1px solid rgba(197, 160, 89, 0.22) !important;
+}
+
+.opt-roman-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid rgba(197, 160, 89, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--brass-bright);
+  flex-shrink: 0;
+}
+
+/* Благородный изумруд и терракот при ответе */
+.quiz-option-btn.correct {
+  background: rgba(45, 106, 79, 0.36) !important;
+  border-color: var(--museum-emerald-light) !important;
+  color: var(--clay-ivory) !important;
+}
+
+.quiz-option-btn.wrong {
+  background: rgba(155, 61, 43, 0.36) !important;
+  border-color: var(--museum-terracotta-light) !important;
+  color: #f8d5cc !important;
+}
+
+.quiz-explanation-box.exp-emerald {
+  border-left: 3px solid var(--museum-emerald-light) !important;
+  background: rgba(45, 106, 79, 0.16) !important;
+}
+
+.quiz-explanation-box.exp-terracotta {
+  border-left: 3px solid var(--museum-terracotta-light) !important;
+  background: rgba(155, 61, 43, 0.16) !important;
+}
+
+.exp-header {
+  font-weight: 700;
+  color: var(--clay-ivory);
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+/* Электронная именная «Грамота знатока истории ЛДПК» */
+.gramota-parchment-card {
+  background: linear-gradient(135deg, #f5efe4 0%, #e7decb 100%);
+  color: #1f1b17;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
+  margin-bottom: 16px;
+}
+
+.gramota-inner-frame {
+  border: 2px double #8a6829;
+  padding: 22px 24px;
+  text-align: center;
+  position: relative;
+}
+
+.gramota-top-crest {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #7a5c24;
+  margin-bottom: 6px;
+}
+
+.gramota-main-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #8a6829;
+  line-height: 1.05;
+}
+
+.gramota-subtitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #3d352c;
+  margin-bottom: 16px;
+}
+
+.gramota-recipient-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.gramota-label {
+  font-size: 0.76rem;
+  color: #5c5144;
+}
+
+.gramota-name-input {
+  width: 85%;
+  max-width: 340px;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid #8a6829;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #181410;
+  text-align: center;
+  padding: 2px 8px;
+  outline: none;
+}
+
+.gramota-body-text {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #463f37;
+  max-width: 440px;
+  margin: 0 auto 14px auto;
+}
+
+.gramota-rank-pill {
+  display: inline-block;
+  padding: 5px 16px;
+  background: rgba(138, 104, 41, 0.14);
+  border: 1px solid #8a6829;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: #6e501a;
+  margin-bottom: 16px;
+}
+
+.gramota-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(138, 104, 41, 0.3);
+}
+
+.gramota-score-box {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 2px;
+}
+
+.gramota-score-box span {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: #6e6253;
+}
+
+.gramota-score-box strong {
+  font-size: 1.05rem;
+  color: #1f1b17;
+}
+
+.gramota-score-box small {
+  font-size: 0.7rem;
+  color: #6e6253;
+}
+
+.museum-official-seal {
+  width: 84px;
+  height: 84px;
+  color: #8c2d19;
+  opacity: 0.88;
+  transform: rotate(-8deg);
+}
+
+.seal-svg {
+  width: 100%;
+  height: 100%;
+}

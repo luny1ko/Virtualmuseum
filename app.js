@@ -9,9 +9,10 @@
  * 5. Аппаратный 3D-просмотр GLB/GLTF моделей без сброса WebGL-контекста.
  * 6. Аудиогид на базе Web Speech API.
  */
-import { initMuseumVFX } from './vfx-engine.js';
-import { initSpatialEngine } from './spatial-engine.js';
-import { initDigitalTwinAndScanner } from './museum-3d-map.js';
+import { AmbientDustStage } from './vfx-engine.js'; // Оставляем только музейную пыль в лучах света (без старого кибер-прелоадера)
+import { initArchivalBookPreloader } from './preloader-book.js'; // 1. Новая 3D-книга «Архивная летопись»
+import { initVisualAndSoundEngine } from './visual-sound.js'; // 5. Новый звук (шелест страниц, щелчки, суб-бас) + 3D-Tilt
+import { initDigitalTwinAndScanner } from './museum-3d-map.js'; // 2, 3, 4. Гипсовый 3D-макет Three.js + Каталог 2.0 + Викторина 2.0
 class MuseumApp {
   constructor() {
     this.data = { halls: [] };
@@ -1040,8 +1041,18 @@ class MuseumApp {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  initMuseumVFX();
+  // 1. Запускаем новый прелоадер-книгу «Архивная летопись» (1941–2026)
+  initArchivalBookPreloader();
+
+  // 2. Запускаем лёгкую музейную пыль в лучах света из твоего vfx-engine.js
+  new AmbientDustStage({ particleCount: 48 });
+
+  // 3. Инициализируем основное ядро музея
   const app = new MuseumApp();
-  initSpatialEngine(app);
-  initDigitalTwinAndScanner(app); // Подключает Three.js 3D-карту и X-Ray Сканер витрин
+
+  // 4. Подключаем процедурный звук (Web Audio API), 3D-Tilt и свет залов
+  initVisualAndSoundEngine(app);
+
+  // 5. Подключаем Three.js 3D-макет здания, Каталог 2.0 и Викторину 2.0 с Грамотой
+  initDigitalTwinAndScanner(app);
 });
