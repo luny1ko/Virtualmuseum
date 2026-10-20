@@ -1,11 +1,4 @@
-// admin.js — MUSEUM STUDIO PRO
-/**
- * Профессиональная среда проектирования экспозиции музея ЛДПК:
- * 1. Строгое сохранение соотношения сторон (Aspect-Ratio Lock) для панорам (16:9) и плана (420:800).
- * 2. Лазерное перекрестие (Crosshair) + направляющие привязки (Snap Guides) и перетаскивание маркеров.
- * 3. Drag-and-Drop сортировка фотогалереи с живыми превью и проверкой загрузки.
- * 4. Асинхронный валидатор 3D-моделей (.glb/.gltf) и встроенный Live Test Preview.
- */
+// admin.js — ПОНЯТНЫЙ РЕДАКТОР ЭКСПОЗИЦИИ МУЗЕЯ ЛДПК 2.0 (Полная сборка)
 class MuseumStudioPro {
   constructor() {
     this.data = { halls: [] };
@@ -15,6 +8,7 @@ class MuseumStudioPro {
     this.isDraggingMarker = false;
     this.dragSrcRow = null;
     this.toastTimeout = null;
+    this.pendingConfirmAction = null;
 
     this.dom = {
       fileInput: document.getElementById('json-file-input'),
@@ -27,7 +21,7 @@ class MuseumStudioPro {
       hallSelect: document.getElementById('hall-select'),
       snapToggle: document.getElementById('snap-toggle'),
 
-      // Телеметрия и холст
+      // Холст и телеметрия
       hudModeName: document.getElementById('hud-mode-name'),
       hudCursorCoords: document.getElementById('hud-cursor-coords'),
       hudSelectedId: document.getElementById('hud-selected-id'),
@@ -40,7 +34,7 @@ class MuseumStudioPro {
       adminSvgMap: document.getElementById('admin-svg-map'),
       planMarkersLayer: document.getElementById('admin-plan-markers-layer'),
 
-      // Перекрестие и направляющие
+      // Перекрестие
       crosshair: document.getElementById('crosshair-overlay'),
       chLineH: document.getElementById('ch-line-h'),
       chLineV: document.getElementById('ch-line-v'),
@@ -48,7 +42,7 @@ class MuseumStudioPro {
       snapGuideV: document.getElementById('snap-guide-v'),
       chReadout: document.getElementById('ch-readout'),
 
-      // Инспектор формы
+      // Правая панель формы
       chipsBox: document.getElementById('vitrines-chips'),
       editorHeading: document.getElementById('editor-heading'),
       btnNewVitrine: document.getElementById('btn-new-vitrine'),
@@ -60,17 +54,36 @@ class MuseumStudioPro {
       formMapY: document.getElementById('form-map-y'),
       formTitle: document.getElementById('form-title'),
       formEpoch: document.getElementById('form-epoch'),
-      formModel3d: document.getElementById('form-model3d'),
-      btnValidateGlb: document.getElementById('btn-validate-glb'),
-      glbBadge: document.getElementById('glb-validation-badge'),
-      glbStatusText: document.getElementById('glb-status-text'),
       formDesc: document.getElementById('form-desc'),
       formAudio: document.getElementById('form-audio'),
+
+      // Характеристики / Метки витрины (extraInfo)
+      extraInfoContainer: document.getElementById('extra-info-container'),
+      btnAddExtraInfo: document.getElementById('btn-add-extra-info'),
+
+      // 3D Модель с мини-превью и удалением крестиком
+      formModel3d: document.getElementById('form-model3d'),
+      glbFilePicker: document.getElementById('glb-file-picker'),
+      btnValidateGlb: document.getElementById('btn-validate-glb'),
+      btnClearGlb: document.getElementById('btn-clear-glb'),
+      glbMiniPreview: document.getElementById('admin-glb-mini-preview'),
+      glbEmptyPlaceholder: document.getElementById('glb-empty-placeholder'),
+      glbBadge: document.getElementById('glb-validation-badge'),
+      glbStatusText: document.getElementById('glb-status-text'),
+
+      // Галерея фотографий
       imagesContainer: document.getElementById('images-container'),
       btnAddImage: document.getElementById('btn-add-image'),
       btnDeleteVitrine: document.getElementById('btn-delete-vitrine'),
 
-      // Live Preview Modal
+      // Модальное окно подтверждения удаления
+      confirmBackdrop: document.getElementById('confirm-modal-backdrop'),
+      confirmTitle: document.getElementById('confirm-modal-title'),
+      confirmDesc: document.getElementById('confirm-modal-desc'),
+      btnConfirmCancel: document.getElementById('btn-confirm-cancel'),
+      btnConfirmAccept: document.getElementById('btn-confirm-accept'),
+
+      // Предпросмотр витрины
       lpBackdrop: document.getElementById('live-preview-backdrop'),
       lpCloseBtn: document.getElementById('lp-close-btn'),
       lpBtnGallery: document.getElementById('lp-btn-gallery'),
@@ -107,10 +120,16 @@ class MuseumStudioPro {
   bindEvents() {
     this.dom.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
 
-    this.dom.btnFetch.addEventListener('click', async () => {
-      localStorage.removeItem('museum_exhibits_data');
-      await this.fetchDefaultData();
-      this.showToast('База синхронизирована с исходным exhibits.json', 'info');
+    this.dom.btnFetch.addEventListener('click', () => {
+      this.openConfirmDialog(
+        'Вернуть исходную базу музея?',
+        'Все несохранённые в файл изменения будут сброшены к начальному состоянию exhibits.json.',
+        async () => {
+          localStorage.removeItem('museum_exhibits_data');
+          await this.fetchDefaultData();
+          this.showToast('Восстановлена исходная база музея (exhibits.json)');
+        }
+      );
     });
 
     this.dom.btnExport.addEventListener('click', () => this.exportJsonFile());
@@ -121,7 +140,6 @@ class MuseumStudioPro {
       this.renderHallCanvas();
     });
 
-    // Переключение между Панорамой (16:9) и Планом здания (420:800)
     this.dom.viewModeSelect.addEventListener('change', () => {
       this.adminViewMode = this.dom.viewModeSelect.value;
       const isPlan = this.adminViewMode === 'building-plan';
@@ -133,7 +151,7 @@ class MuseumStudioPro {
       this.dom.hallImg.classList.toggle('hidden', isPlan);
       this.dom.markersLayer.classList.toggle('hidden', isPlan);
       this.dom.hallSelectWrap.classList.toggle('hidden', isPlan);
-      this.dom.hudModeName.textContent = isPlan ? 'BLUEPRINT_420_800' : 'PANORAMA_16_9';
+      this.dom.hudModeName.textContent = isPlan ? 'Схема здания' : 'Фотография зала';
 
       if (isPlan) {
         this.renderAdminPlanMarkers();
@@ -142,7 +160,6 @@ class MuseumStudioPro {
       }
     });
 
-    // Движение курсора: обновление Crosshair, Snap Guides и перетаскивание маркера
     this.dom.viewport.addEventListener('pointermove', (e) => this.handleViewportPointerMove(e));
     this.dom.viewport.addEventListener('pointerdown', (e) => {
       if (e.target.closest('.canvas-marker') || e.target.closest('.canvas-plan-node')) return;
@@ -153,26 +170,65 @@ class MuseumStudioPro {
       this.isDraggingMarker = false;
     });
 
-    // Синхронизация ручного ввода координат
     [this.dom.formX, this.dom.formY, this.dom.formMapX, this.dom.formMapY].forEach((inp) => {
       inp.addEventListener('input', () => this.syncInputsToSelectedVitrine());
     });
 
-    // Валидация 3D модели (.glb)
+    // Добавление новой характеристики / метки (extraInfo)
+    this.dom.btnAddExtraInfo?.addEventListener('click', () => {
+      this.addExtraInfoRow('', '');
+    });
+
+    // Управление 3D-моделью (.glb)
     this.dom.btnValidateGlb.addEventListener('click', () => {
       this.validateGlbAsset(this.dom.formModel3d.value.trim());
     });
-    this.dom.formModel3d.addEventListener('blur', () => {
-      this.validateGlbAsset(this.dom.formModel3d.value.trim());
+
+    this.dom.formModel3d.addEventListener('input', () => {
+      this.updateGlbMiniPreview(this.dom.formModel3d.value.trim());
     });
 
-    // Кнопки управления витриной
+    this.dom.glbFilePicker?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const suggestedPath = `assets/models/${file.name}`;
+      this.dom.formModel3d.value = suggestedPath;
+      this.validateGlbAsset(suggestedPath);
+    });
+
+    this.dom.btnClearGlb.addEventListener('click', () => {
+      this.dom.formModel3d.value = '';
+      this.validateGlbAsset('');
+      this.showToast('3D-модель откреплена от витрины');
+    });
+
     this.dom.btnNewVitrine.addEventListener('click', () => this.createNewVitrine());
     this.dom.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
-    this.dom.btnDeleteVitrine.addEventListener('click', () => this.deleteCurrentVitrine());
+
+    this.dom.btnDeleteVitrine.addEventListener('click', () => {
+      const hall = this.getCurrentHall();
+      const vitrine = hall?.hotspots?.find((v) => v.id === this.selectedVitrineId);
+      const title = vitrine?.title || 'этот экспонат';
+
+      this.openConfirmDialog(
+        'Вы уверены, что хотите удалить этот экспонат?',
+        `Витрина «${title}» будет удалена из зала «${hall?.name || ''}».`,
+        () => this.deleteCurrentVitrine()
+      );
+    });
+
     this.dom.btnAddImage.addEventListener('click', () => this.addImageRow('', ''));
 
-    // Live Test Preview
+    this.dom.btnConfirmCancel.addEventListener('click', () => this.closeConfirmDialog());
+    this.dom.confirmBackdrop.addEventListener('click', (e) => {
+      if (e.target === this.dom.confirmBackdrop) this.closeConfirmDialog();
+    });
+    this.dom.btnConfirmAccept.addEventListener('click', () => {
+      const fn = this.pendingConfirmAction;
+      this.closeConfirmDialog();
+      if (typeof fn === 'function') fn();
+    });
+
     this.dom.btnLivePreview.addEventListener('click', () => this.openLivePreview());
     this.dom.lpCloseBtn.addEventListener('click', () => this.closeLivePreview());
     this.dom.lpBackdrop.addEventListener('click', (e) => {
@@ -194,12 +250,56 @@ class MuseumStudioPro {
     });
   }
 
+  openConfirmDialog(title, desc, onConfirm) {
+    this.pendingConfirmAction = onConfirm;
+    if (this.dom.confirmTitle) this.dom.confirmTitle.textContent = title;
+    if (this.dom.confirmDesc) this.dom.confirmDesc.textContent = desc;
+    this.dom.confirmBackdrop.classList.remove('hidden');
+  }
+
+  closeConfirmDialog() {
+    this.pendingConfirmAction = null;
+    this.dom.confirmBackdrop.classList.add('hidden');
+  }
+
   /* ==========================================================================
-     КАЛИБРОВАННЫЙ VIEWPORT, ПЕРЕКРЕСТИЕ И SNAP GUIDES
+     ДОБАВЛЕНИЕ И РЕДАКТИРОВАНИЕ МЕТОК (extraInfo)
+     ========================================================================== */
+  addExtraInfoRow(label = '', value = '') {
+    if (!this.dom.extraInfoContainer) return;
+    const row = document.createElement('div');
+    row.className = 'extra-info-row';
+
+    const labelInp = document.createElement('input');
+    labelInp.type = 'text';
+    labelInp.className = 'form-input extra-label-input';
+    labelInp.placeholder = 'Метка (напр. Материалы)';
+    labelInp.value = label;
+
+    const valInp = document.createElement('input');
+    valInp.type = 'text';
+    valInp.className = 'form-input extra-value-input';
+    valInp.placeholder = 'Значение (напр. Фарфор)';
+    valInp.value = value;
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn btn-remove-cross btn-remove-extra';
+    delBtn.title = 'Удалить эту метку';
+    delBtn.innerHTML = '&times;';
+    delBtn.addEventListener('click', () => row.remove());
+
+    row.appendChild(labelInp);
+    row.appendChild(valInp);
+    row.appendChild(delBtn);
+    this.dom.extraInfoContainer.appendChild(row);
+  }
+
+  /* ==========================================================================
+     ВЫРАВНИВАНИЕ И УСТАНОВКА КООРДИНАТ КЛИКОМ НА ХОЛСТЕ
      ========================================================================== */
   snapValue(val) {
     if (!this.dom.snapToggle.checked) return Number(val.toFixed(1));
-    // Примагничивание к центральным осям 50%, 25%, 75%
     const guides = [25, 50, 75];
     for (const g of guides) {
       if (Math.abs(val - g) < 1.2) return g;
@@ -217,15 +317,13 @@ class MuseumStudioPro {
     const snappedX = this.snapValue(relX);
     const snappedY = this.snapValue(relY);
 
-    // Позиционируем линии перекрестия
     this.dom.chLineH.style.top = `${snappedY}%`;
     this.dom.chLineV.style.left = `${snappedX}%`;
-    this.dom.chReadout.style.left = `${ Math.min(82, snappedX) }%`;
-    this.dom.chReadout.style.top = `${ Math.max(8, snappedY) }%`;
-    this.dom.chReadout.textContent = `X:${snappedX.toFixed(1)}% Y:${snappedY.toFixed(1)}%`;
+    this.dom.chReadout.style.left = `${Math.min(82, snappedX)}%`;
+    this.dom.chReadout.style.top = `${Math.max(8, snappedY)}%`;
+    this.dom.chReadout.textContent = `X: ${snappedX.toFixed(1)}% | Y: ${snappedY.toFixed(1)}%`;
     this.dom.hudCursorCoords.textContent = `X: ${snappedX.toFixed(1)}% | Y: ${snappedY.toFixed(1)}%`;
 
-    // Отображение золотых направляющих при попадании на 25% / 50% / 75%
     const isSnapX = [25, 50, 75].includes(snappedX);
     const isSnapY = [25, 50, 75].includes(snappedY);
     this.dom.snapGuideV.classList.toggle('hidden', !isSnapX);
@@ -266,7 +364,7 @@ class MuseumStudioPro {
   }
 
   /* ==========================================================================
-     DRAG-AND-DROP СОРТИРОВКА ГАЛЕРЕИ И ВАЛИДАЦИЯ АССЕТОВ
+     ДОБАВЛЕНИЕ ФОТОГРАФИЙ С МИНИ-ПРЕВЬЮ И УДАЛЕНИЕМ КРЕСТИКОМ
      ========================================================================== */
   addImageRow(url = '', caption = '') {
     const card = document.createElement('div');
@@ -274,25 +372,32 @@ class MuseumStudioPro {
     card.draggable = true;
 
     card.innerHTML = `
-      <div class="drag-handle" title="Перетащите для изменения порядка">⋮⋮</div>
+      <div class="drag-handle" title="Потяните, чтобы поменять порядок фото">⋮⋮</div>
       <div class="thumb-preview-box">
-        <img src="${url || ''}" alt="" class="thumb-preview-img">
-        <span class="thumb-status-pill"></span>
+        <img src="${url || ''}" alt="Превью" class="thumb-preview-img">
+        <span class="thumb-status-pill" title="Статус загрузки картинки"></span>
       </div>
       <div class="dnd-inputs-col">
-        <input type="text" class="form-input mono-input img-url-input" placeholder="assets/images/... или https://" value="${url}">
-        <input type="text" class="form-input img-caption-input" placeholder="Подпись к фотографии в галерее" value="${caption}">
+        <div class="img-url-row">
+          <input type="text" class="form-input img-url-input" placeholder="assets/images/... или ссылка" value="${url}">
+          <label class="btn btn-xs btn-secondary" title="Выбрать картинку на компьютере">
+            📁 Файл
+            <input type="file" class="img-file-picker" accept="image/*" hidden>
+          </label>
+        </div>
+        <input type="text" class="form-input img-caption-input" placeholder="Подпись под фотографией (необязательно)" value="${caption}">
       </div>
-      <button type="button" class="btn btn-xs btn-danger btn-remove-img" title="Удалить фото">&times;</button>
+      <button type="button" class="btn btn-remove-cross btn-remove-img" title="Удалить эту фотографию">&times;</button>
     `;
 
     const urlInput = card.querySelector('.img-url-input');
+    const filePicker = card.querySelector('.img-file-picker');
     const thumbImg = card.querySelector('.thumb-preview-img');
     const statusPill = card.querySelector('.thumb-status-pill');
 
     const updateThumbnail = (val) => {
       if (!val) {
-        thumbImg.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="60" height="44"%3E%3Crect width="100%25" height="100%25" fill="%2314141d"/%3E%3C/svg%3E';
+        thumbImg.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="58" height="46"%3E%3Crect width="100%25" height="100%25" fill="%2314141a"/%3E%3Ctext x="50%25" y="52%25" fill="%23666" font-size="9" text-anchor="middle" dominant-baseline="middle"%3EНет фото%3C/text%3E%3C/svg%3E';
         statusPill.className = 'thumb-status-pill';
         return;
       }
@@ -303,9 +408,25 @@ class MuseumStudioPro {
 
     updateThumbnail(url);
     urlInput.addEventListener('input', () => updateThumbnail(urlInput.value.trim()));
-    card.querySelector('.btn-remove-img').addEventListener('click', () => card.remove());
 
-    // HTML5 Drag and Drop события сортировки
+    filePicker.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const suggestedPath = `assets/images/${file.name}`;
+      urlInput.value = suggestedPath;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        thumbImg.src = ev.target.result;
+        statusPill.className = 'thumb-status-pill ok';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    card.querySelector('.btn-remove-img').addEventListener('click', () => {
+      card.remove();
+    });
+
     card.addEventListener('dragstart', (e) => {
       this.dragSrcRow = card;
       card.classList.add('dragging');
@@ -319,14 +440,10 @@ class MuseumStudioPro {
 
     card.addEventListener('dragover', (e) => {
       e.preventDefault();
-      if (this.dragSrcRow && this.dragSrcRow !== card) {
-        card.classList.add('drag-over');
-      }
+      if (this.dragSrcRow && this.dragSrcRow !== card) card.classList.add('drag-over');
     });
 
-    card.addEventListener('dragleave', () => {
-      card.classList.remove('drag-over');
-    });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
 
     card.addEventListener('drop', (e) => {
       e.preventDefault();
@@ -335,48 +452,63 @@ class MuseumStudioPro {
         const all = [...this.dom.imagesContainer.children];
         const srcIdx = all.indexOf(this.dragSrcRow);
         const targetIdx = all.indexOf(card);
-        if (srcIdx < targetIdx) {
-          card.after(this.dragSrcRow);
-        } else {
-          card.before(this.dragSrcRow);
-        }
+        if (srcIdx < targetIdx) card.after(this.dragSrcRow);
+        else card.before(this.dragSrcRow);
       }
     });
 
     this.dom.imagesContainer.appendChild(card);
   }
 
+  /* ==========================================================================
+     МИНИ-ПРЕВЬЮ И ПРОВЕРКА 3D МОДЕЛИ (.GLB)
+     ========================================================================== */
+  updateGlbMiniPreview(url) {
+    if (!this.dom.glbMiniPreview || !this.dom.glbEmptyPlaceholder) return;
+    if (!url) {
+      this.dom.glbMiniPreview.classList.add('hidden');
+      this.dom.glbMiniPreview.removeAttribute('src');
+      this.dom.glbEmptyPlaceholder.classList.remove('hidden');
+      return;
+    }
+    this.dom.glbEmptyPlaceholder.classList.add('hidden');
+    this.dom.glbMiniPreview.classList.remove('hidden');
+    this.dom.glbMiniPreview.src = url;
+  }
+
   async validateGlbAsset(url) {
+    this.updateGlbMiniPreview(url);
+
     if (!url) {
       this.dom.glbBadge.className = 'asset-status-badge status-idle';
-      this.dom.glbStatusText.textContent = 'Модель не указана (активен режим 2D-фотогалереи)';
+      this.dom.glbStatusText.textContent = '3D-модель не прикреплена (показываются только фото)';
       return;
     }
 
     this.dom.glbBadge.className = 'asset-status-badge status-idle';
-    this.dom.glbStatusText.textContent = 'Проверка доступности .glb ресурса...';
+    this.dom.glbStatusText.textContent = 'Проверка файла 3D-модели...';
 
     try {
       const res = await fetch(url, { method: 'HEAD' });
       if (res.ok) {
         this.dom.glbBadge.className = 'asset-status-badge status-ok';
-        this.dom.glbStatusText.textContent = '✓ GLB-модель доступна и готова к WebGL-рендеру';
+        this.dom.glbStatusText.textContent = '✓ 3D-модель успешно загружена и готова к показу';
       } else {
         throw new Error(`HTTP ${res.status}`);
       }
     } catch (err) {
       this.dom.glbBadge.className = 'asset-status-badge status-error';
-      this.dom.glbStatusText.textContent = '✕ Файл модели не найден или блокируется CORS';
+      this.dom.glbStatusText.textContent = '✕ Файл 3D-модели не найден по указанному адресу';
     }
   }
 
   /* ==========================================================================
-     LIVE TEST PREVIEW (ЖИВАЯ ПРОВЕРКА ВИТРИНЫ БЕЗ ВЫХОДА ИЗ СТУДИИ)
+     ЖИВОЙ ПРЕДПРОСМОТР ВИТРИНЫ ГЛАЗАМИ ПОСЕТИТЕЛЯ
      ========================================================================== */
   openLivePreview() {
     const title = this.dom.formTitle.value.trim() || 'Без названия';
     const epoch = this.dom.formEpoch.value.trim() || 'Архивный фонд ЛДПК';
-    const desc = this.dom.formDesc.value.trim() || 'Описание не заполнено.';
+    const desc = this.dom.formDesc.value.trim() || 'Описание пока не заполнено.';
     const audio = this.dom.formAudio.value.trim() || desc;
     const modelUrl = this.dom.formModel3d.value.trim();
 
@@ -406,7 +538,7 @@ class MuseumStudioPro {
   }
 
   /* ==========================================================================
-     БАЗОВЫЕ ОПЕРАЦИИ С ДАННЫМИ EXHIBITS.JSON И ПЛАНОМ ЗДАНИЯ
+     РАБОТА С БАЗОЙ EXHIBITS.JSON И LOCALSTORAGE
      ========================================================================== */
   async fetchDefaultData() {
     try {
@@ -415,7 +547,7 @@ class MuseumStudioPro {
       this.data = await response.json();
       this.populateHallSelect();
     } catch (err) {
-      this.showToast('Откройте exhibits.json через кнопку «📂 Импорт JSON»', 'info');
+      this.showToast('Нажмите «📂 Загрузить базу», чтобы открыть файл exhibits.json');
     }
   }
 
@@ -428,9 +560,9 @@ class MuseumStudioPro {
         this.data = JSON.parse(e.target.result);
         this.persistData();
         this.populateHallSelect();
-        this.showToast('База exhibits.json успешно импортирована', 'success');
+        this.showToast('База музея успешно загружена из файла!');
       } catch (err) {
-        this.showToast('Ошибка синтаксиса JSON', 'error');
+        this.showToast('Ошибка: выбранный файл повреждён или не является JSON');
       }
     };
     reader.readAsText(file);
@@ -501,7 +633,6 @@ class MuseumStudioPro {
 
   selectVitrine(vitrineId) {
     this.selectedVitrineId = vitrineId;
-    this.dom.hudSelectedId.textContent = vitrineId.toUpperCase();
     let vitrine = null;
 
     (this.data.halls || []).forEach((h) => {
@@ -518,7 +649,8 @@ class MuseumStudioPro {
 
     if (!vitrine) return;
 
-    this.dom.editorHeading.textContent = vitrine.title || 'Свойства витрины';
+    this.dom.hudSelectedId.textContent = vitrine.title || vitrineId;
+    this.dom.editorHeading.textContent = vitrine.title || 'Настройка витрины';
     this.dom.formId.value = vitrine.id;
     this.dom.formX.value = vitrine.x ?? 50.0;
     this.dom.formY.value = vitrine.y ?? 50.0;
@@ -532,8 +664,15 @@ class MuseumStudioPro {
 
     this.validateGlbAsset(vitrine.model3d || '');
 
+    // Отрисовка фотографий
     this.dom.imagesContainer.innerHTML = '';
     (vitrine.images || []).forEach((img) => this.addImageRow(img.url, img.caption));
+
+    // Отрисовка меток (extraInfo)
+    if (this.dom.extraInfoContainer) {
+      this.dom.extraInfoContainer.innerHTML = '';
+      (vitrine.extraInfo || []).forEach((item) => this.addExtraInfoRow(item.label, item.value));
+    }
 
     this.renderMarkersAndChips();
     if (this.adminViewMode === 'building-plan') {
@@ -588,8 +727,8 @@ class MuseumStudioPro {
         g.style.cursor = 'pointer';
 
         g.innerHTML = `
-          <circle r="11" fill="${isSelected ? '#fbbf24' : '#38bdf8'}" stroke="#ffffff" stroke-width="2"></circle>
-          <text y="3.5" fill="#060609" font-size="9.5" font-weight="800" font-family="JetBrains Mono" text-anchor="middle">${idx + 1}</text>
+          <circle r="11" fill="${isSelected ? '#e5c158' : '#2a2723'}" stroke="#f5f2eb" stroke-width="2"></circle>
+          <text y="3.5" fill="${isSelected ? '#121216' : '#f5f2eb'}" font-size="9.5" font-weight="800" text-anchor="middle">${idx + 1}</text>
         `;
 
         g.addEventListener('pointerdown', (e) => {
@@ -662,7 +801,7 @@ class MuseumStudioPro {
       y: 50.0,
       mapX: 50.0,
       mapY: 50.0,
-      title: 'Новый стенд экспозиции',
+      title: 'Новая витрина музея',
       epoch: '2026 г.',
       model3d: '',
       description: '',
@@ -673,7 +812,7 @@ class MuseumStudioPro {
 
     this.persistData();
     this.selectVitrine(newId);
-    this.showToast('Создан новый стенд — укажите его точку на холсте', 'info');
+    this.showToast('Создана новая витрина — кликните по фото зала, чтобы указать её место!');
   }
 
   handleFormSubmit(e) {
@@ -695,6 +834,7 @@ class MuseumStudioPro {
     existing.description = this.dom.formDesc.value.trim();
     existing.audioText = this.dom.formAudio.value.trim();
 
+    // Сохранение фотографий
     const images = [];
     this.dom.imagesContainer.querySelectorAll('.dnd-image-card').forEach((card) => {
       const url = card.querySelector('.img-url-input').value.trim();
@@ -703,10 +843,21 @@ class MuseumStudioPro {
     });
     existing.images = images;
 
+    // Сохранение меток / характеристик (extraInfo)
+    if (this.dom.extraInfoContainer) {
+      const extraInfo = [];
+      this.dom.extraInfoContainer.querySelectorAll('.extra-info-row').forEach((row) => {
+        const l = row.querySelector('.extra-label-input').value.trim();
+        const v = row.querySelector('.extra-value-input').value.trim();
+        if (l && v) extraInfo.push({ label: l, value: v });
+      });
+      existing.extraInfo = extraInfo;
+    }
+
     this.persistData();
     this.renderMarkersAndChips();
     if (this.adminViewMode === 'building-plan') this.renderAdminPlanMarkers();
-    this.showToast('Стенд синхронизирован с локальной базой музея', 'success');
+    this.showToast('Изменения успешно сохранены! Витрина уже обновлена в музее.');
   }
 
   deleteCurrentVitrine() {
@@ -717,7 +868,7 @@ class MuseumStudioPro {
     this.persistData();
     this.renderMarkersAndChips();
     if (this.adminViewMode === 'building-plan') this.renderAdminPlanMarkers();
-    this.showToast('Витрина удалена из зала', 'info');
+    this.showToast('Витрина удалена из зала');
   }
 
   exportJsonFile() {
@@ -728,14 +879,14 @@ class MuseumStudioPro {
     a.download = 'exhibits.json';
     a.click();
     URL.revokeObjectURL(url);
-    this.showToast('Файл exhibits.json скачан', 'success');
+    this.showToast('Готовая база exhibits.json скачана на ваш компьютер!');
   }
 
-  showToast(message, type = 'success') {
+  showToast(message) {
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.dom.toast.className = `admin-toast active ${type}`;
+    this.dom.toast.classList.add('active');
     this.dom.toastMessage.textContent = message;
-    this.toastTimeout = setTimeout(() => this.dom.toast.classList.remove('active'), 3000);
+    this.toastTimeout = setTimeout(() => this.dom.toast.classList.remove('active'), 3400);
   }
 }
 

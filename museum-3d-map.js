@@ -1138,18 +1138,26 @@ export class ChronoArchiveCatalogV2 {
 }
 
 /* ==========================================================================
-   МОДУЛЬ 4: ГЕЙМИФИКАЦИЯ ВИКТОРИНЫ (QUIZ 2.0 — РИМСКАЯ НУМЕРАЦИЯ & ГРАМОТА)
+   МОДУЛЬ 4: ГЕЙМИФИКАЦИЯ ВИКТОРИНЫ (QUIZ 2.0 — ВВОД Ф.И.О. И ИМЕННАЯ ГРАМОТА)
    ========================================================================== */
 export class NobleQuizV2 {
   constructor(appInstance) {
     this.app = appInstance;
     this.romanNumerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-    this.visitorName = localStorage.getItem('ldpk_diploma_name') || 'Илья Мазанов';
+    this.visitorName = localStorage.getItem('ldpk_diploma_name') || '';
+    this.isNameConfirmed = false;
     this.init();
   }
 
   init() {
     if (!this.app) return;
+
+    const origOpenQuiz = this.app.openQuiz.bind(this.app);
+    this.app.openQuiz = () => {
+      this.isNameConfirmed = false;
+      origOpenQuiz();
+    };
+
     this.app.renderQuizStep = () => this.renderNobleQuizStep();
   }
 
@@ -1165,8 +1173,13 @@ export class NobleQuizV2 {
     const total = questions.length;
     const idx = this.app.quizCurrentIndex;
 
+    // Если все вопросы пройдены: сначала спрашиваем Имя и Фамилию, затем выписываем Грамоту
     if (idx >= total) {
-      this.renderOfficialGramota(body, total);
+      if (!this.isNameConfirmed) {
+        this.renderNamePromptScreen(body, total);
+      } else {
+        this.renderOfficialGramota(body, total);
+      }
       return;
     }
 
@@ -1175,48 +1188,70 @@ export class NobleQuizV2 {
     const romanCurrent = this.toRoman(idx + 1);
     const romanTotal = this.toRoman(total);
 
-    body.innerHTML = `
-      <div class="quiz-v2-progress-header">
-        <span class="quiz-roman-counter">ВОПРОС ${romanCurrent} ИЗ ${romanTotal}</span>
-        <span class="quiz-score-live">Счёт: ${this.app.quizScore}</span>
-      </div>
+    // 1. Создаём шапку и контейнер вопроса
+    body.innerHTML = '';
 
-      <div class="quiz-progress-bar-wrap">
-        <div class="quiz-progress-fill" style="width: ${progressPercent}%;"></div>
-      </div>
+    const headerRow = document.createElement('div');
+    headerRow.className = 'quiz-v2-progress-header';
 
-      <h3 class="quiz-question-text">${this.app.escapeHtml(currentQ.question)}</h3>
+    const counterSpan = document.createElement('span');
+    counterSpan.className = 'quiz-roman-counter';
+    counterSpan.textContent = 'ВОПРОС ' + romanCurrent + ' ИЗ ' + romanTotal;
 
-      <div class="quiz-options-list">
-        ${currentQ.options.map((optText, i) => `
-          <button type="button" class="quiz-option-btn noble-opt-btn" data-opt-idx="${i}">
-            <span class="opt-roman-badge">${this.toRoman(i + 1)}</span>
-            <span class="opt-label-text">${this.app.escapeHtml(optText)}</span>
-          </button>
-        `).join('')}
-      </div>
+    const scoreSpan = document.createElement('span');
+    scoreSpan.className = 'quiz-score-live';
+    scoreSpan.textContent = 'Счёт: ' + this.app.quizScore;
 
-      <div id="quiz-feedback-box" class="quiz-feedback-collapse"></div>
+    headerRow.appendChild(counterSpan);
+    headerRow.appendChild(scoreSpan);
+    body.appendChild(headerRow);
 
-      <button type="button" id="quiz-action-next" class="quiz-next-btn" style="display: none;">
-        ${idx + 1 === total ? 'Оформить именную Грамоту →' : 'Следующий вопрос →'}
-      </button>
-    `;
+    // 2. Золотой прогресс-бар
+    const progWrap = document.createElement('div');
+    progWrap.className = 'quiz-progress-bar-wrap';
+    const progFill = document.createElement('div');
+    progFill.className = 'quiz-progress-fill';
+    progFill.style.width = progressPercent + '%';
+    progWrap.appendChild(progFill);
+    body.appendChild(progWrap);
 
-    const optionBtns = body.querySelectorAll('.quiz-option-btn');
-    const feedbackBox = body.querySelector('#quiz-feedback-box');
-    const nextBtn = body.querySelector('#quiz-action-next');
+    // 3. Текст вопроса
+    const qHeading = document.createElement('h3');
+    qHeading.className = 'quiz-question-text';
+    qHeading.textContent = currentQ.question;
+    body.appendChild(qHeading);
 
-    optionBtns.forEach((btn) => {
+    // 4. Список вариантов ответа (строго через textContent — никаких ${...} на экране!)
+    const optionsList = document.createElement('div');
+    optionsList.className = 'quiz-options-list';
+    const optionBtns = [];
+
+    currentQ.options.forEach((optText, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'quiz-option-btn noble-opt-btn';
+
+      const romanBadge = document.createElement('span');
+      romanBadge.className = 'opt-roman-badge';
+      romanBadge.textContent = this.toRoman(i + 1);
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'opt-label-text';
+      labelSpan.textContent = optText;
+
+      btn.appendChild(romanBadge);
+      btn.appendChild(labelSpan);
+      optionsList.appendChild(btn);
+      optionBtns.push(btn);
+
       btn.addEventListener('click', () => {
-        const chosenIdx = parseInt(btn.getAttribute('data-opt-idx'), 10);
-        const isCorrect = chosenIdx === currentQ.correct;
-
+        const isCorrect = i === currentQ.correct;
         optionBtns.forEach((b) => { b.disabled = true; });
 
         if (isCorrect) {
           btn.classList.add('correct');
           this.app.quizScore++;
+          scoreSpan.textContent = 'Счёт: ' + this.app.quizScore;
         } else {
           btn.classList.add('wrong');
           if (optionBtns[currentQ.correct]) {
@@ -1226,35 +1261,109 @@ export class NobleQuizV2 {
 
         globalSoundEngine?.playQuizFeedback(isCorrect);
 
-        if (feedbackBox) {
-          feedbackBox.innerHTML = `
-            <div class="quiz-explanation-box ${isCorrect ? 'exp-emerald' : 'exp-terracotta'}">
-              <div class="exp-header">
-                ${isCorrect ? '✦ Ответ верный • Историческая справка' : '✦ Историческая справка музея'}
-              </div>
-              <p>${this.app.escapeHtml(currentQ.explanation)}</p>
-            </div>
-          `;
-        }
+        feedbackBox.innerHTML = '';
+        const expBox = document.createElement('div');
+        expBox.className = 'quiz-explanation-box ' + (isCorrect ? 'exp-emerald' : 'exp-terracotta');
 
-        if (nextBtn) nextBtn.style.display = 'block';
+        const expHead = document.createElement('div');
+        expHead.className = 'exp-header';
+        expHead.textContent = isCorrect
+          ? '✦ Ответ верный • Историческая справка'
+          : '✦ Историческая справка музея';
+
+        const expText = document.createElement('p');
+        expText.textContent = currentQ.explanation;
+
+        expBox.appendChild(expHead);
+        expBox.appendChild(expText);
+        feedbackBox.appendChild(expBox);
+
+        nextBtn.style.display = 'block';
       });
     });
 
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        this.app.quizCurrentIndex++;
-        this.renderNobleQuizStep();
-      });
-    }
+    body.appendChild(optionsList);
+
+    // 5. Блок исторической справки и кнопка следующего шага
+    const feedbackBox = document.createElement('div');
+    feedbackBox.id = 'quiz-feedback-box';
+    feedbackBox.className = 'quiz-feedback-collapse';
+    body.appendChild(feedbackBox);
+
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.id = 'quiz-action-next';
+    nextBtn.className = 'quiz-next-btn';
+    nextBtn.style.display = 'none';
+    nextBtn.textContent = idx + 1 === total ? 'Перейти к оформлению Грамоты →' : 'Следующий вопрос →';
+    nextBtn.addEventListener('click', () => {
+      this.app.quizCurrentIndex++;
+      this.renderNobleQuizStep();
+    });
+    body.appendChild(nextBtn);
   }
 
   /**
-   * Финал Викторины 2.0: Электронная именная «Грамота знатока истории ЛДПК» с печатью музея
+   * Экран ввода Имени и Фамилии перед выдачей именной Грамоты
+   */
+  renderNamePromptScreen(body, total) {
+    const score = this.app.quizScore;
+    body.innerHTML = `
+      <div class="quiz-name-prompt-box" style="text-align:center; padding: 12px 6px 8px 6px;">
+        <div style="font-size: 0.72rem; letter-spacing: 0.16em; color: var(--color-gold-bright); font-weight: 700; margin-bottom: 6px;">
+          ВИКТОРИНА ЗАВЕРШЕНА • РЕЗУЛЬТАТ: ${score} ИЗ ${total}
+        </div>
+        <h3 style="font-family: var(--font-display); font-size: 1.65rem; color: var(--color-ivory); margin-bottom: 8px;">
+          Оформление именной Грамоты
+        </h3>
+        <p style="font-size: 0.86rem; color: var(--color-text-muted); max-width: 440px; margin: 0 auto 18px auto; line-height: 1.5;">
+          Введите ваши Имя и Фамилию, чтобы музей вписал их в официальную Грамоту знатока истории ЛДПК:
+        </p>
+
+        <div style="max-width: 380px; margin: 0 auto 20px auto;">
+          <input type="text" id="quiz-visitor-fullname"
+                 value="${this.app.escapeHtml(this.visitorName)}"
+                 placeholder="Например: Илья Мазанов"
+                 maxlength="48"
+                 style="width: 100%; padding: 13px 16px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1.5px solid var(--color-gold); color: var(--color-ivory); font-size: 1rem; font-weight: 600; text-align: center; outline: none;">
+        </div>
+
+        <button type="button" id="btn-generate-gramota" class="quiz-next-btn">
+          ✦ Выписать именную Грамоту
+        </button>
+      </div>
+    `;
+
+    const inputEl = document.getElementById('quiz-visitor-fullname');
+    const confirmBtn = document.getElementById('btn-generate-gramota');
+
+    setTimeout(() => inputEl?.focus(), 60);
+
+    const submitName = () => {
+      const entered = inputEl?.value.trim() || 'Почётный посетитель музея';
+      this.visitorName = entered;
+      localStorage.setItem('ldpk_diploma_name', entered);
+      this.isNameConfirmed = true;
+      globalSoundEngine?.playNobleClick();
+      this.renderOfficialGramota(body, total);
+    };
+
+    confirmBtn?.addEventListener('click', submitName);
+    inputEl?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitName();
+      }
+    });
+  }
+
+  /**
+   * Финал Викторины 2.0: Электронная именная «Грамота знатока истории ЛДПК» с возможностью правки Ф.И.О.
    */
   renderOfficialGramota(body, total) {
     const score = this.app.quizScore;
     const pct = Math.round((score / total) * 100);
+    const displayName = this.visitorName || 'Почётный посетитель музея';
 
     let honorStatus = 'Слушатель исторического курса ЛДПК';
     if (score === total) {
@@ -1275,9 +1384,9 @@ export class NobleQuizV2 {
           <div class="gramota-subtitle">ЗНАТОКА ИСТОРИИ ЛДПК</div>
 
           <div class="gramota-recipient-block">
-            <label for="gramota-name-input" class="gramota-label">Настоящая грамота вручается:</label>
+            <label for="gramota-name-input" class="gramota-label">Настоящая грамота вручается (можно кликнуть для изменения):</label>
             <input type="text" id="gramota-name-input" class="gramota-name-input"
-                   value="${this.app.escapeHtml(this.visitorName)}" placeholder="Введите Фамилию и Имя">
+                   value="${this.app.escapeHtml(displayName)}" placeholder="Введите Имя и Фамилию">
           </div>
 
           <p class="gramota-body-text">
@@ -1294,7 +1403,6 @@ export class NobleQuizV2 {
               <small>${dateStr}</small>
             </div>
 
-            <!-- Векторная гербовая печать музея ЛДПК -->
             <div class="museum-official-seal" title="Официальная печать экспозиции">
               <svg viewBox="0 0 120 120" class="seal-svg">
                 <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 2"/>
@@ -1310,8 +1418,11 @@ export class NobleQuizV2 {
         </div>
       </div>
 
-      <div class="gramota-actions-bar">
-        <button type="button" id="quiz-restart-btn" class="quiz-next-btn">
+      <div class="gramota-actions-bar" style="display:flex; gap:10px;">
+        <button type="button" id="btn-edit-gramota-name" class="btn-map-tool" style="padding: 12px 16px; border-radius:10px;">
+          ✎ Изменить имя
+        </button>
+        <button type="button" id="quiz-restart-btn" class="quiz-next-btn" style="flex:1;">
           Пройти снова
         </button>
       </div>
@@ -1319,11 +1430,17 @@ export class NobleQuizV2 {
 
     const nameInp = document.getElementById('gramota-name-input');
     nameInp?.addEventListener('input', (e) => {
-      this.visitorName = e.target.value.trim() || 'Посетитель музея';
+      this.visitorName = e.target.value.trim();
       localStorage.setItem('ldpk_diploma_name', this.visitorName);
     });
 
+    document.getElementById('btn-edit-gramota-name')?.addEventListener('click', () => {
+      this.isNameConfirmed = false;
+      this.renderNamePromptScreen(body, total);
+    });
+
     document.getElementById('quiz-restart-btn')?.addEventListener('click', () => {
+      this.isNameConfirmed = false;
       this.app.quizCurrentIndex = 0;
       this.app.quizScore = 0;
       this.renderNobleQuizStep();

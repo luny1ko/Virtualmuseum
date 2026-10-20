@@ -779,18 +779,35 @@ class MuseumApp {
 
     hotspots.forEach((spot) => {
       const marker = document.createElement('button');
+      marker.type = 'button';
       marker.className = 'hotspot-marker';
       marker.style.left = `${spot.x}%`;
       marker.style.top = `${spot.y}%`;
-      marker.setAttribute('aria-label', spot.title);
+      marker.setAttribute('aria-label', spot.title || 'Витрина');
 
-      marker.innerHTML = `
-        <div class="hotspot-beacon">
-          <div class="ripple-ring"></div>
-          <div class="core-dot"></div>
-        </div>
-        <div class="hotspot-tooltip">${this.escapeHtml(spot.title)}</div>
-      `;
+      // Латунный пин
+      const beacon = document.createElement('div');
+      beacon.className = 'hotspot-beacon';
+      beacon.innerHTML = '<div class="ripple-ring"></div><div class="core-dot"></div>';
+
+      // Тултип витрины (безопасная сборка через textContent — никаких \${...} в тексте)
+      const tooltip = document.createElement('div');
+      tooltip.className = 'hotspot-tooltip';
+
+      if (spot.epoch && spot.epoch.trim() !== '') {
+        const epochEl = document.createElement('span');
+        epochEl.className = 'hotspot-tooltip-epoch';
+        epochEl.textContent = spot.epoch;
+        tooltip.appendChild(epochEl);
+      }
+
+      const titleEl = document.createElement('span');
+      titleEl.className = 'hotspot-tooltip-title';
+      titleEl.textContent = spot.title || 'Без названия';
+      tooltip.appendChild(titleEl);
+
+      marker.appendChild(beacon);
+      marker.appendChild(tooltip);
 
       marker.addEventListener('click', () => this.openVitrineDrawer(spot));
       this.dom.hotspotsLayer.appendChild(marker);
