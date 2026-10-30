@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Редактор экспозиции | Виртуальный музей ЛДПК</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+</head>
+<body>
+  <div class="studio-layout">
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ РЕДАКТОРА МУЗЕЯ -->
+    <header class="studio-topbar">
+      <div class="topbar-brand">
+        <div class="studio-badge-logo">ЛДПК</div>
+        <div>
+          <div class="brand-title-row">
+            <h1>РЕДАКТОР МУЗЕЯ</h1>
+            <span class="brass-tag">Версия 2.0</span>
+          </div>
+          <p>Удобное управление залами, витринами, фотографиями и 3D-экспонатами</p>
+        </div>
+      </div>
+
+      <!-- Выбор режима отображения и зала -->
+      <div class="workspace-mode-tabs">
+        <div class="select-field-group">
+          <label for="admin-view-mode">РЕЖИМ ЭКРАНА:</label>
+          <div class="custom-select-wrapper">
+            <select id="admin-view-mode" class="studio-select">
+              <option value="hall">🖼️ Фотография зала (точки на панораме)</option>
+              <option value="building-plan">🗺️ Схема здания (точки на карте этажа)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="select-field-group" id="hall-select-wrap">
+          <label for="hall-select" id="hall-select-label">ВЫБЕРИТЕ ЗАЛ:</label>
+          <div class="custom-select-wrapper">
+            <select id="hall-select" class="studio-select"></select>
+          </div>
+        </div>
+
+        <label class="snap-toggle-label" title="Помогает ровно выравнивать точки по сетке">
+          <input type="checkbox" id="snap-toggle" checked>
+          <span>🧲 Выравнивание</span>
+        </label>
+      </div>
+
+      <!-- Понятные кнопки действий -->
+      <div class="topbar-actions">
+        <button type="button" id="btn-live-preview" class="btn btn-preview" title="Посмотреть, как витрина выглядит в музее">
+          👁️ Предпросмотр
+        </button>
+        <label class="btn btn-secondary file-upload-label" title="Открыть ранее скачанный файл exhibits.json">
+          📂 Загрузить базу
+          <input type="file" id="json-file-input" accept=".json" hidden>
+        </label>
+        <button type="button" id="btn-fetch-current" class="btn btn-secondary" title="Отменить правки и вернуть исходную базу музея">
+          🔄 Вернуть как было
+        </button>
+        <button type="button" id="btn-export-json" class="btn btn-primary" title="Скачать готовый файл exhibits.json для сохранения в папку проекта">
+          📥 Скачать готовую базу для музея
+        </button>
+        <a href="index.html" class="btn btn-back">🏛 В музей</a>
+      </div>
+    </header>
+
+    <!-- ОСНОВНОЕ РАБОЧЕЕ ПРОСТРАНСТВО -->
+    <main class="studio-workspace">
+      <!-- ЛЕВАЯ СЕКЦИЯ: НАГЛЯДНЫЙ ГИД + ИНТЕРАКТИВНЫЙ ХОЛСТ ЗАЛА -->
+      <section class="viewport-panel">
+        <!-- Пошаговая подсказка (Wizard) -->
+        <div class="wizard-guide-banner" id="wizard-guide-banner">
+          <div class="wizard-step">
+            <span class="step-num">1</span>
+            <span>Выберите нужный <b>зал</b> вверху</span>
+          </div>
+          <span class="wizard-arrow">→</span>
+          <div class="wizard-step">
+            <span class="step-num">2</span>
+            <span>Выберите <b>витрину</b> справа (или создайте новую)</span>
+          </div>
+          <span class="wizard-arrow">→</span>
+          <div class="wizard-step">
+            <span class="step-num">3</span>
+            <span><b>Кликните по фото зала</b>, чтобы поставить точку</span>
+          </div>
+          <span class="wizard-arrow">→</span>
+          <div class="wizard-step">
+            <span class="step-num">4</span>
+            <span>Нажмите <b>«Сохранить изменения»</b> внизу</span>
+          </div>
+        </div>
+
+        <div class="viewport-hud-bar">
+          <div class="hud-telemetry">
+            <span>Режим: <strong id="hud-mode-name">Фотография зала</strong></span>
+            <span>Позиция курсора: <strong id="hud-cursor-coords">X: 50.0% | Y: 50.0%</strong></span>
+            <span>Выбрана витрина: <strong id="hud-selected-id">Не выбрана</strong></span>
+          </div>
+          <span class="canvas-hint" id="canvas-hint">💡 Нажмите мышкой в любое место на фото или перетащите кружок с номером</span>
+        </div>
+
+        <div class="viewport-stage-outer" id="viewport-stage-outer">
+          <div class="aspect-locked-frame mode-panorama" id="canvas-viewport">
+            <img id="hall-canvas-img" src="" alt="Панорама зала" class="canvas-img">
+            <div id="canvas-markers-layer" class="canvas-markers-layer"></div>
+
+            <!-- Схема этажа (420x800) -->
+            <div id="admin-plan-wrapper" class="admin-plan-wrapper hidden">
+              <svg id="admin-svg-map" class="museum-svg-map" viewBox="0 0 420 800" preserveAspectRatio="none">
+                <defs>
+                  <pattern id="studio-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(197, 160, 89, 0.08)" stroke-width="1"/>
+                  </pattern>
+                </defs>
+                <rect width="420" height="800" fill="#141311" />
+                <rect width="420" height="800" fill="url(#studio-grid)" />
+
+                <rect x="20" y="20" width="380" height="230" rx="6" class="hall-polygon hall-1-poly" data-hall-id="college-history" />
+                <text x="32" y="44" fill="#e5c158" font-weight="700" font-size="12">01. ИСТОРИЯ ЛДПК</text>
+
+                <rect x="20" y="260" width="155" height="520" rx="6" class="hall-polygon hall-4-poly" data-hall-id="achievements" />
+                <text x="30" y="284" fill="#c4b5fd" font-weight="700" font-size="11">04. ДОСТИЖЕНИЯ</text>
+
+                <rect x="185" y="260" width="215" height="280" rx="6" class="hall-polygon hall-2-poly" data-hall-id="region-history" />
+                <text x="198" y="284" fill="#93c5fd" font-weight="700" font-size="11">02. БЫТ И КУЛЬТУРА</text>
+
+                <rect x="185" y="550" width="215" height="230" rx="6" class="hall-polygon hall-3-poly" data-hall-id="military-glory" />
+                <text x="198" y="574" fill="#fca5a5" font-weight="700" font-size="11">03. ВОЕННАЯ ПАМЯТЬ</text>
+
+                <g id="admin-plan-markers-layer"></g>
+              </svg>
+            </div>
+
+            <!-- Перекрестие и направляющие выравнивания -->
+            <div class="crosshair-overlay" id="crosshair-overlay" aria-hidden="true">
+              <div class="ch-line-h" id="ch-line-h"></div>
+              <div class="ch-line-v" id="ch-line-v"></div>
+              <div class="snap-guide-h hidden" id="snap-guide-h"></div>
+              <div class="snap-guide-v hidden" id="snap-guide-v"></div>
+              <div class="ch-readout" id="ch-readout">50.0%, 50.0%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ПРАВАЯ СЕКЦИЯ: ПОНЯТНАЯ КАРТОЧКА РЕДАКТИРОВАНИЯ ВИТРИНЫ -->
+      <aside class="inspector-panel">
+        <div class="inspector-header">
+          <div>
+            <span class="section-brass-tag">КАРТОЧКА ЭКСПОНАТА</span>
+            <h2 id="editor-heading">Настройка витрины</h2>
+          </div>
+          <button type="button" id="btn-new-vitrine" class="btn btn-accent">+ Добавить витрину</button>
+        </div>
+
+        <!-- Переключатель витрин текущего зала -->
+        <div class="vitrines-outliner">
+          <span class="list-label">ВЫБЕРИТЕ ВИТРИНУ В ЭТОМ ЗАЛЕ:</span>
+          <div id="vitrines-chips" class="vitrines-chips"></div>
+        </div>
+
+        <form id="vitrine-form" class="vitrine-form">
+          <input type="hidden" id="form-vitrine-id">
+
+          <!-- 1. Основная информация о витрине -->
+          <div class="inspector-card">
+            <div class="card-header-label">1. НАЗВАНИЕ И ОПИСАНИЕ ЭКСПОНАТА</div>
+            <div class="form-group">
+              <label for="form-title">Название витрины (заголовок):</label>
+              <input type="text" id="form-title" class="form-input" placeholder="Например: Арифмометр «Феликс» и реликвии выпускников" required>
+            </div>
+            <div class="form-group">
+              <label for="form-epoch">Годы / Историческая эпоха:</label>
+              <input type="text" id="form-epoch" class="form-input" placeholder="Например: 1941–1970 гг.">
+            </div>
+            <div class="form-group">
+              <label for="form-desc">Подробный рассказ об экспонате:</label>
+              <textarea id="form-desc" class="form-textarea" rows="3" placeholder="Введите историческое описание для посетителей..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="form-audio">🎙 Текст для голосового экскурсовода (аудиогида):</label>
+              <textarea id="form-audio" class="form-textarea" rows="2" placeholder="Этот текст прочитает голосовой помощник при нажатии кнопки в музее..."></textarea>
+            </div>
+          </div>
+
+          <!-- 1.5. Характеристики / Метки витрины (extraInfo) -->
+          <div class="inspector-card">
+            <div class="group-title-row">
+              <div>
+                <span class="card-header-label">ХАРАКТЕРИСТИКИ / МЕТКИ ВИТРИНЫ</span>
+                <p class="card-helper-subtext">Плашки под заголовком (например: «Главный экспонат: Арифмометр», «Материалы: Фарфор»).</p>
+              </div>
+              <button type="button" id="btn-add-extra-info" class="btn btn-xs btn-accent">+ Добавить метку</button>
+            </div>
+            <div id="extra-info-container" class="extra-info-admin-list"></div>
+          </div>
+
+          <!-- 2. Фотографии витрины с мини-превью и удалением крестиком -->
+          <div class="inspector-card">
+            <div class="group-title-row">
+              <div>
+                <span class="card-header-label">2. ФОТОГРАФИИ ЭКСПОНАТА</span>
+                <p class="card-helper-subtext">Видны сразу с мини-картинкой. Можно менять порядок перетаскиванием.</p>
+              </div>
+              <button type="button" id="btn-add-image" class="btn btn-sm btn-accent">+ Добавить фото</button>
+            </div>
+            <div id="images-container" class="dnd-gallery-list"></div>
+          </div>
+
+          <!-- 3. 3D-Модель экспоната с мини-превью и кнопкой удаления крестиком -->
+          <div class="inspector-card">
+            <div class="card-header-label">3. ОБЪЁМНАЯ 3D-МОДЕЛЬ (.GLB) — НЕОБЯЗАТЕЛЬНО</div>
+            <p class="card-helper-subtext">Если у экспоната есть 3D-модель, укажите ссылку или выберите файл — ниже сразу появится её 3D-превью.</p>
+
+            <div class="glb-card-box">
+              <div class="glb-thumb-box" id="glb-thumb-box">
+                <model-viewer id="admin-glb-mini-preview" class="admin-glb-mini-preview hidden" auto-rotate camera-controls></model-viewer>
+                <div id="glb-empty-placeholder" class="glb-empty-placeholder">Без 3D</div>
+              </div>
+
+              <div class="glb-controls-col">
+                <div class="input-with-status">
+                  <input type="text" id="form-model3d" class="form-input" placeholder="assets/models/exhibit.glb или https://...">
+                  <label class="btn btn-xs btn-secondary" title="Выбрать файл .glb на компьютере">
+                    📁 Файл
+                    <input type="file" id="glb-file-picker" accept=".glb,.gltf" hidden>
+                  </label>
+                  <button type="button" id="btn-validate-glb" class="btn btn-xs btn-secondary">Проверить</button>
+                  <button type="button" id="btn-clear-glb" class="btn btn-xs btn-remove-cross" title="Удалить 3D-модель из витрины">&times;</button>
+                </div>
+
+                <div id="glb-validation-badge" class="asset-status-badge status-idle">
+                  <span class="status-dot"></span>
+                  <span id="glb-status-text">3D-модель не прикреплена (показываются только фото)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Точные координаты точки -->
+          <div class="inspector-card coords-collapsible-card">
+            <div class="card-header-label">4. РАСПОЛОЖЕНИЕ ТОЧКИ (СТАВИТСЯ КЛИКОМ НА ФОТО СЛЕВА)</div>
+            <div class="coords-grid">
+              <div class="form-group">
+                <label for="form-x">По горизонтали на фото (%)</label>
+                <input type="number" id="form-x" class="form-input" step="0.1" min="0" max="100" required>
+              </div>
+              <div class="form-group">
+                <label for="form-y">По вертикали на фото (%)</label>
+                <input type="number" id="form-y" class="form-input" step="0.1" min="0" max="100" required>
+              </div>
+              <div class="form-group">
+                <label for="form-map-x">На карте здания X (%)</label>
+                <input type="number" id="form-map-x" class="form-input" step="0.1" min="0" max="100">
+              </div>
+              <div class="form-group">
+                <label for="form-map-y">На карте здания Y (%)</label>
+                <input type="number" id="form-map-y" class="form-input" step="0.1" min="0" max="100">
+              </div>
+            </div>
+          </div>
+
+          <!-- Крупная кнопка сохранения и аккуратная кнопка удаления с защитой -->
+          <div class="form-actions">
+            <button type="submit" id="btn-save-vitrine" class="btn btn-save-large">
+              💾 Сохранить изменения
+            </button>
+            <button type="button" id="btn-delete-vitrine" class="btn btn-danger" title="Удалить выбранную витрину">
+              🗑 Удалить витрину
+            </button>
+          </div>
+        </form>
+      </aside>
+    </main>
+
+    <!-- МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ -->
+    <div id="confirm-modal-backdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="confirm-dialog-card">
+        <div class="confirm-icon-circle">⚠️</div>
+        <h3 id="confirm-modal-title">Вы уверены, что хотите удалить этот экспонат?</h3>
+        <p id="confirm-modal-desc">Витрина будет удалена из текущего зала. Вы всегда сможете отменить это действие кнопкой «Вернуть как было».</p>
+        <div class="confirm-dialog-actions">
+          <button type="button" id="btn-confirm-cancel" class="btn btn-secondary">Отмена, оставить</button>
+          <button type="button" id="btn-confirm-accept" class="btn btn-danger-solid">Да, удалить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ЖИВОГО ПРЕДПРОСМОТРА -->
+    <div id="live-preview-backdrop" class="live-preview-backdrop hidden">
+      <div class="live-preview-window">
+        <header class="lp-header">
+          <div class="lp-title-box">
+            <span class="brass-tag">ПРЕДПРОСМОТР ВИТРИНЫ</span>
+            <h3 id="lp-title">Так эту витрину увидит посетитель музея</h3>
+          </div>
+          <div class="lp-mode-switch" id="lp-mode-switch">
+            <button type="button" class="btn btn-xs btn-secondary active" id="lp-btn-gallery">🖼 Фотографии</button>
+            <button type="button" class="btn btn-xs btn-secondary" id="lp-btn-3d">🧊 3D Модель</button>
+          </div>
+          <button type="button" id="lp-close-btn" class="lp-close-btn" aria-label="Закрыть">&times;</button>
+        </header>
+
+        <div class="lp-body">
+          <div class="lp-media-stage">
+            <img id="lp-img" src="" alt="Preview" class="lp-preview-img">
+            <model-viewer id="lp-model" class="lp-preview-model hidden" camera-controls auto-rotate></model-viewer>
+            <span id="lp-epoch-badge" class="lp-epoch-badge"></span>
+          </div>
+          <div class="lp-info-stage">
+            <h2 id="lp-spot-heading"></h2>
+            <div class="lp-divider"></div>
+            <p id="lp-spot-desc"></p>
+            <div class="lp-audio-box">
+              <strong>🎙 Голосовой экскурсовод прочитает:</strong>
+              <p id="lp-spot-audio"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Изумрудное уведомление об успешном сохранении (Toast) -->
+    <div id="admin-toast" class="admin-toast" aria-live="polite">
+      <span class="toast-icon" id="toast-icon">✓</span>
+      <span class="toast-message" id="toast-message">Изменения успешно сохранены!</span>
+    </div>
+  </div>
+
+  <script src="admin.js" type="module"></script>
+</body>
+</html>

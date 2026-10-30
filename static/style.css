@@ -1,0 +1,4331 @@
+/* ============================================================
+   Общие
+   ============================================================ */
+
+:root{
+  --blue:#005baa;
+  --blue-dark:#003e7e;
+  --yellow:#ffdd00;
+  --bg-site:#f0f8ff;
+
+  --glass: rgba(0,0,0,.55);
+  --glass-2: rgba(0,0,0,.35);
+  --text:#ffffff;
+  --muted: rgba(255,255,255,.75);
+
+  --shadow: 0 10px 25px rgba(0,0,0,.25);
+  --radius: 12px;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+a{ color:inherit; }
+
+/* ============================================================
+   Сайт (index.html) — фиксированное окно 1100px
+   ============================================================ */
+
+body.site{
+  background-color: var(--bg-site);
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  color: #000;
+}
+
+.window-container{
+  background: #fff;
+  width: 1100px;
+  min-width: 1100px;
+  max-width: 1100px;
+  box-shadow: 0 0 15px rgba(0,0,0,.3);
+  border-radius: 12px;
+  padding: 20px 30px;
+}
+
+/* --- Верхняя синяя панель --- */
+.top-bar{
+  background-color: var(--blue);
+  color: white;
+  font-size: 14px;
+  padding: 6px 20px;
+  border-bottom: 3px solid var(--blue-dark);
+  user-select: none;
+}
+
+.top-bar-content{
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.ministry-block{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: white;
+  text-decoration: none;
+  transition: color .2s ease;
+}
+.ministry-block img{
+  height: 30px;
+  width: auto;
+  pointer-events: none;
+}
+.ministry-block:hover span{ color: #7fe0d6; }
+.ministry-block:hover img{ filter: brightness(1.15); }
+
+.top-bar-buttons{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.top-bar-buttons button{
+  background: none;
+  border: 1px solid white;
+  color: white;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color .2s ease;
+}
+.top-bar-buttons button:hover{ background-color: rgba(255,255,255,.15); }
+
+.social-icon{
+  width: 50px;
+  height: 50px;
+  margin-left: 5px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* --- Заголовок и логотип --- */
+header{
+  background-color: white;
+  color: black;
+  padding: 20px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.header-container{
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.logo-block img{
+  height: 100px;
+  width: auto;
+}
+
+.header-text{
+  flex: 1;
+  text-align: center;
+}
+
+.header-text h1{
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.header-text h2{
+  font-weight: 700;
+  font-size: 22px;
+  margin-top: 5px;
+}
+
+/* --- Навигация --- */
+nav{
+  background-color: var(--blue);
+  text-align:center;
+  padding: 12px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+nav a{
+  color: white;
+  text-decoration: none;
+  margin: 0 15px;
+  font-weight: bold;
+  font-size: 15px;
+  transition: color .2s ease;
+}
+nav a:hover{ color: var(--yellow); }
+
+/* --- Контент --- */
+.container{
+  max-width: 1000px;
+  margin: 30px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  color: black;
+}
+
+.container h2{
+  color: var(--blue);
+  margin-top: 0;
+}
+
+.container p, .container li{
+  line-height: 1.6;
+}
+
+.site-cta{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  flex-wrap: wrap;
+  margin: 16px 0 8px;
+}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: #fff;
+  color: #111;
+  text-decoration:none;
+  cursor:pointer;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+}
+
+.btn-primary{
+  background: var(--blue);
+  color: #fff;
+  border-color: rgba(255,255,255,.15);
+}
+
+.btn-primary:hover{
+  background: #004f93;
+}
+
+.progress-card{
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #f7fbff;
+  border: 1px solid rgba(0,91,170,.15);
+}
+
+.progress-card .muted{
+  color: rgba(0,0,0,.65);
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+footer{
+  background-color: var(--blue);
+  color: white;
+  text-align:center;
+  padding: 15px;
+  margin-top: 30px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+
+/* ============================================================
+   Музей (komnata1–4) — full-screen
+   ============================================================ */
+
+html, body.museum{
+  height: 100%;
+}
+
+body.museum{
+  margin:0;
+  padding:0;
+  background:#000;
+  color: var(--text);
+  overflow:hidden;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Сцена */
+.scene{
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  cursor: grab;
+  background: #000;
+  touch-action: none; /* для свайпа на мобилках */
+}
+
+.scene.is-grabbing{
+  cursor: grabbing;
+}
+
+.image-wrapper{
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  will-change: transform;
+}
+
+#backgroundImage{
+  height: 100%;
+  width: auto;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Точки */
+#pointsContainer{
+  position:absolute;
+  inset: 0;
+}
+
+.point{
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 10;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.point img{
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display:block;
+}
+
+.point--info::after{
+  content:"";
+  position:absolute;
+  inset:-4px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,.55);
+  opacity: .0;
+  animation: pulse 2.2s ease-out infinite;
+}
+
+@keyframes pulse{
+  0%{ transform: scale(.75); opacity: .0; }
+  25%{ opacity: .55; }
+  100%{ transform: scale(1.35); opacity: 0; }
+}
+
+.tooltip{
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: rgba(0,0,0,.85);
+  color: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity .2s ease;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+}
+
+.point:hover .tooltip{ opacity: 1; }
+
+/* Верхняя панель управления */
+.museum-topbar{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.15);
+  z-index: 100;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 0 14px;
+  gap: 10px;
+}
+
+.museum-topbar__group{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.museum-title{
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: .95;
+}
+
+.museum-room{
+  font-size: 13px;
+  opacity: .8;
+  margin-left: 8px;
+}
+
+.mbtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  cursor:pointer;
+  user-select:none;
+  text-decoration:none;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  white-space: nowrap;
+}
+
+.mbtn:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.28);
+}
+
+.mbtn:active{
+  transform: translateY(0);
+}
+
+.mbtn--icon{
+  width: 36px;
+  padding: 0;
+}
+
+@media (max-width: 880px){
+  .museum-title{ display:none; }
+}
+
+/* Подсказка */
+.hint{
+  position: fixed;
+  left: 50%;
+  top: 70px;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  z-index: 110;
+  font-size: 14px;
+  box-shadow: var(--shadow);
+  max-width: min(560px, calc(100vw - 28px));
+  text-align: center;
+}
+
+.hint.is-hidden{ display:none; }
+
+/* Инфо-бокс */
+.info-box{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: clamp(320px, 34vw, 420px);
+  max-height: calc(100vh - 56px - 32px);
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 200;
+  overflow: hidden;
+  display:none;
+}
+
+.info-box.is-open{ display:block; }
+
+.info-box__media img{
+  width: 100%;
+  display:block;
+}
+
+.info-box__body{
+  padding: 12px 14px 14px;
+}
+
+.info-box__title{
+  font-size: 16px;
+  font-weight: 650;
+  margin-bottom: 8px;
+  text-align:center;
+}
+
+.info-box__text{
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: rgba(255,255,255,.92);
+  max-height: 200px;
+  overflow:auto;
+  padding-right: 4px;
+}
+
+.info-box__actions{
+  display:flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.info-link{
+  flex: 1;
+  text-align:center;
+  text-decoration:none;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+}
+
+.info-link:hover{
+  background: rgba(255,255,255,.12);
+}
+
+.close-x{
+  position:absolute;
+  top: 8px;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.25);
+  color:#fff;
+  cursor:pointer;
+}
+
+.close-x:hover{
+  background: rgba(255,100,100,.22);
+}
+
+/* Модальные окна */
+.modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 300;
+  padding: 18px;
+}
+
+.modal.is-open{ display:flex; }
+
+.modal__panel{
+  width: min(860px, 100%);
+  max-height: min(720px, 100%);
+  background: rgba(0,0,0,.78);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  display:flex;
+  flex-direction: column;
+}
+
+.modal__header{
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal__title{
+  font-weight: 650;
+  font-size: 16px;
+}
+
+.modal__body{
+  padding: 14px;
+  overflow:auto;
+}
+
+.map-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 640px){
+  .map-grid{ grid-template-columns: 1fr; }
+}
+
+.map-card{
+  position: relative;
+  border-radius: 14px;
+  overflow:hidden;
+  border: 1px solid rgba(255,255,255,.15);
+  background: #111;
+  cursor:pointer;
+  min-height: 150px;
+}
+
+.map-card__bg{
+  position:absolute;
+  inset:0;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(.8);
+  transform: scale(1.02);
+}
+
+.map-card__overlay{
+  position:absolute;
+  inset:0;
+  background: linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,.15));
+}
+
+.map-card__label{
+  position:absolute;
+  left: 12px;
+  bottom: 10px;
+  font-weight: 650;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+.badge{
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.95);
+}
+
+.search-row{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  margin-bottom: 12px;
+}
+
+.search-row input{
+  flex: 1;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  padding: 0 12px;
+  outline:none;
+}
+
+.search-row input::placeholder{
+  color: rgba(255,255,255,.6);
+}
+
+.list{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-item{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+}
+
+.list-item img{
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: #000;
+}
+
+.list-item__meta{
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item__title{
+  font-weight: 650;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.list-item__sub{
+  font-size: 13px;
+  color: rgba(255,255,255,.75);
+}
+
+.small-note{
+  color: rgba(255,255,255,.72);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   Дополнительные фичи: квест, экскурсия, звук, таймлайн
+   ========================================================= */
+
+/* Badge for icon buttons */
+.mbtn--icon[data-badge]{
+  position: relative;
+}
+
+.mbtn--icon[data-badge]::after{
+  content: attr(data-badge);
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(255, 221, 0, 0.92);
+  color: #0b1220;
+  border: 1px solid rgba(0,0,0,0.25);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  white-space: nowrap;
+}
+
+/* Toast */
+.toast{
+  position: fixed;
+  left: 50%;
+  top: 64px;
+  transform: translateX(-50%) translateY(-10px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1200;
+
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255,255,255,0.95);
+  font-size: 14px;
+  max-width: min(720px, 92vw);
+  text-align: center;
+  transition: opacity .22s ease, transform .22s ease;
+}
+
+.toast.is-open{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Confetti canvas */
+.confetti{
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  pointer-events: none;
+}
+
+/* Timeline */
+.timeline{
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 900;
+
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  padding: 10px 12px;
+  border-radius: 14px;
+
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  box-shadow: 0 10px 26px rgba(0,0,0,0.32);
+}
+
+.timeline__label{
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  padding: 0 8px;
+  border-right: 1px solid rgba(255,255,255,0.14);
+}
+
+.timeline__chips{
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.timeline__chips::-webkit-scrollbar{
+  height: 6px;
+}
+
+.timeline__chips::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.18);
+  border-radius: 999px;
+}
+
+.chip{
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+
+.chip:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.10);
+}
+
+.chip.is-active{
+  border-color: rgba(255,221,0,0.65);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+  background: rgba(255,221,0,0.18);
+}
+
+/* Keep info-box above timeline */
+body.has-timeline .info-box{
+  bottom: 82px;
+}
+
+/* Point highlight/dim for timeline */
+.point.is-dim{
+  opacity: 0.28;
+  filter: saturate(0.35);
+  transform: translate(-50%, -50%) scale(0.92);
+}
+
+.point.is-highlight{
+  transform: translate(-50%, -50%) scale(1.12);
+  filter: drop-shadow(0 10px 18px rgba(255,221,0,0.22));
+}
+
+/* Quest */
+.quest__header{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.quest__name{
+  font-size: 18px;
+  font-weight: 750;
+  margin-bottom: 4px;
+}
+
+.quest__sub{
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+  line-height: 1.45;
+}
+
+.quest__count{
+  font-weight: 800;
+  font-size: 16px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,221,0,0.18);
+  border: 1px solid rgba(255,221,0,0.30);
+}
+
+.progressbar{
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  margin: 10px 0 14px;
+}
+
+.progressbar__fill{
+  height: 100%;
+  width: 0;
+  background: rgba(255,221,0,0.85);
+}
+
+.quest__list{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.quest-item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+}
+
+.quest-item.is-done{
+  border-color: rgba(122, 255, 122, 0.35);
+  background: rgba(122, 255, 122, 0.08);
+}
+
+.quest-item__left{
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.quest-item__check{
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: #0b1220;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.18);
+  flex: 0 0 auto;
+}
+
+.quest-item.is-done .quest-item__check{
+  background: rgba(122, 255, 122, 0.9);
+  border-color: rgba(122, 255, 122, 0.6);
+}
+
+.quest-item__meta{
+  min-width: 0;
+}
+
+.quest-item__title{
+  font-weight: 700;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quest-item__hint{
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quest__actions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.certificate{
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.35);
+}
+
+.certificate canvas{
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.02);
+}
+
+.is-hidden{ display: none !important; }
+
+/* Guide */
+.guide__header{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.guide__name{
+  font-size: 18px;
+  font-weight: 750;
+  margin-bottom: 4px;
+}
+
+.guide__sub{
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+  line-height: 1.45;
+}
+
+.guide__count{
+  font-weight: 800;
+  font-size: 16px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 209, 255, 0.14);
+  border: 1px solid rgba(0, 209, 255, 0.30);
+}
+
+.guide__now{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  margin: 12px 0;
+}
+
+.guide__nowlabel{
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+  margin-bottom: 4px;
+}
+
+.guide__nowtitle{
+  font-weight: 750;
+  margin-bottom: 2px;
+}
+
+.guide__nowroom{
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+}
+
+.guide__actions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.guide__list{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.guide-step{
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.guide-step:hover{
+  background: rgba(255,255,255,0.10);
+}
+
+.guide-step.is-current{
+  border-color: rgba(0, 209, 255, 0.40);
+  background: rgba(0, 209, 255, 0.12);
+}
+
+.guide-step__num{
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.guide-step__title{
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.guide-step__room{
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+}
+
+/* Floating guide widget */
+.guide-widget{
+  position: fixed;
+  left: 16px;
+  bottom: 86px;
+  z-index: 950;
+
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  box-shadow: 0 10px 26px rgba(0,0,0,0.32);
+
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.guide-widget.is-open{
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.guide-widget__left{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guide-widget__title{
+  font-weight: 750;
+}
+
+.guide-widget__step{
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+}
+
+.guide-widget__right{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 720px){
+  .timeline{
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+  body.has-timeline .info-box{ bottom: 92px; }
+  .guide-widget{ left: 10px; }
+}
+
+/* ============================================================
+   Главное меню в стиле музейного портала
+   ============================================================ */
+
+body.site.museum-home{
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  min-height: 100vh;
+  display: block;
+  overflow: hidden;
+  background: #151616;
+  color: #d8d8d8;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+body.site.museum-home .home-shell{
+  width: 100vw;
+  height: 100vh;
+  background: #141515;
+  overflow: hidden;
+  position: relative;
+}
+
+body.site.museum-home .home-header{
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 92px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 0 30px;
+  background: rgba(17,18,19,.92);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.home-logo{
+  min-width: 360px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-left: 0;
+  text-decoration: none;
+  color: #e7e7e7;
+  letter-spacing: 1.6px;
+}
+
+.home-logo-mark{
+  width: 88px;
+  height: 88px;
+  border-left: 4px solid rgba(255,255,255,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,.72);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  transform: skew(-8deg);
+}
+
+
+.home-logo-image{
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.home-logo-title{
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.home-logo > div{
+  display:grid;
+  gap:6px;
+}
+
+.home-logo-subtitle{
+  margin-top: 0;
+  font-size: 10px;
+  color: rgba(255,255,255,.50);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.home-nav{
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  max-width: 760px;
+  margin: 0 auto;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(12,63,124,.92);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+.home-nav a{
+  color: rgba(255,255,255,.92);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.35px;
+  text-decoration: none;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border-radius: 999px;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.home-nav a:hover{
+  color: #fff;
+  background: rgba(255,255,255,.14);
+  transform: translateY(-1px);
+}
+
+.home-culture{
+  min-width: 250px;
+  text-align: right;
+  color: rgba(255,255,255,.68);
+  font-size: 14px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.home-culture span{ color: #cf3035; }
+
+.home-grid{
+  position: absolute;
+  inset: 92px 0 0 0;
+  display: grid;
+  grid-template-columns: minmax(380px, 43%) minmax(0, 57%);
+  grid-template-rows: 48% 52%;
+  background: #171818;
+}
+
+.home-room-panel,
+.home-photo-panel,
+.home-masterpieces-panel{
+  position: relative;
+  overflow: hidden;
+}
+
+.home-room-panel{
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  background: #1f2020;
+}
+
+.home-room-link{
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: #fff;
+  text-decoration: none;
+  position: relative;
+}
+
+.home-room-link img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(.9) brightness(.88);
+}
+
+.home-side-arrow{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,.68);
+  font-size: 62px;
+  font-family: Georgia, serif;
+  font-weight: 100;
+}
+.home-side-arrow--left{ left: 6px; }
+.home-side-arrow--right{ right: 6px; }
+
+.home-room-top{
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  color: rgba(255,255,255,.8);
+}
+
+.home-room-badge{
+  position: absolute;
+  top: 8px;
+  right: 34px;
+  background: rgba(0,0,0,.35);
+  color: rgba(255,255,255,.82);
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.home-room-strip{
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 32px;
+  min-width: 146px;
+  background: rgba(56,57,57,.92);
+  color: rgba(255,255,255,.78);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.home-collections-panel{
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 140px;
+  padding: 0 90px;
+  background: #141515;
+}
+
+.home-menu-card{
+  height: 300px;
+  border: 2px solid rgba(255,255,255,.55);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+
+.home-menu-card:hover{
+  border-color: #fff;
+  background: rgba(255,255,255,.04);
+  transform: translateY(-3px);
+}
+
+.home-card-icon{
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  color: rgba(255,255,255,.55);
+  font-size: 46px;
+  letter-spacing: -10px;
+}
+
+.home-menu-card strong{
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,.86);
+  font-size: 21px;
+  letter-spacing: 1px;
+}
+
+.home-menu-card--collection strong{ background: #be7068; }
+.home-menu-card--media strong{ background: #708597; }
+
+.home-photo-panel{
+  grid-column: 2;
+  grid-row: 1;
+  background: #202020;
+}
+
+.home-slideshow,
+.home-slideshow img{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.home-slideshow img{
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.025);
+  transition: opacity 1.1s ease, transform 5s ease;
+  filter: brightness(.75) contrast(1.04);
+}
+
+.home-slideshow img.is-active{
+  opacity: 1;
+  transform: scale(1);
+}
+
+.home-palace-title{
+  position: absolute;
+  top: 24px;
+  left: 18px;
+  color: rgba(255,255,255,.7);
+  font-size: 14px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.home-masterpieces-panel{
+  grid-column: 2;
+  grid-row: 2;
+  background: #151616;
+  padding: 34px 104px 72px;
+}
+
+.home-master-row{
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  gap: 92px;
+}
+
+.home-master-card{
+  height: min(280px, 62%);
+  border: 1px solid rgba(255,255,255,.55);
+  display: block;
+  overflow: hidden;
+  background: #222;
+  text-decoration: none;
+  transition: transform .2s ease, border-color .2s ease;
+}
+
+.home-master-card:hover{
+  transform: scale(1.025);
+  border-color: #fff;
+}
+
+.home-master-card img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(.9) saturate(.9);
+}
+
+.home-master-arrow{
+  position: absolute;
+  top: 48%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  color: #a73b3b;
+  font-size: 58px;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.home-master-arrow--prev{ left: 16px; }
+.home-master-arrow--next{ right: 12px; }
+.home-master-arrow:hover{ color: #d04848; }
+
+.home-master-dots{
+  position: absolute;
+  left: 40px;
+  bottom: 34px;
+  display: flex;
+  gap: 13px;
+}
+
+.home-master-dots span{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.45);
+}
+
+.home-master-title{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  background: #444545;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,.82);
+  font-size: 16px;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+.home-bottom-icons{
+  position: absolute;
+  right: 22px;
+  bottom: 14px;
+  z-index: 30;
+  color: rgba(255,255,255,.38);
+  font-size: 34px;
+  display: flex;
+  gap: 22px;
+}
+
+@media (max-width: 1400px){
+  body.site.museum-home .home-header{ padding: 0 18px; gap: 18px; }
+  .home-logo{ min-width: 310px; gap: 12px; }
+  .home-logo-subtitle{ display: none; }
+  .home-nav{ max-width: 620px; }
+  .home-nav a{ padding: 9px 12px; font-size: 11px; }
+  .home-culture{ min-width: 180px; font-size: 12px; letter-spacing: 2px; }
+  .home-masterpieces-panel{ padding-left: 70px; padding-right: 70px; }
+  .home-master-row{ gap: 38px; }
+}
+
+@media (max-width: 900px){
+  body.site.museum-home{ overflow: auto; }
+  body.site.museum-home .home-shell{ height: auto; min-height: 100vh; overflow: visible; }
+  body.site.museum-home .home-header{ position: relative; height: auto; min-height: 92px; flex-direction: column; justify-content: center; gap: 12px; padding: 14px 16px; }
+  .home-logo{ min-width: 0; width: 100%; justify-content: center; }
+  .home-nav{ width: 100%; max-width: none; flex-wrap: wrap; padding: 10px 12px; gap: 8px; border-radius: 20px; }
+  .home-nav a{ flex: 1 1 auto; text-align: center; }
+  .home-culture{ display: none; }
+  .home-grid{ position: relative; inset: auto; display: grid; grid-template-columns: 1fr; grid-template-rows: 320px 280px 360px; }
+  .home-room-panel,.home-photo-panel,.home-masterpieces-panel{ grid-column: 1; grid-row: auto; }
+  .home-room-panel{ grid-row: auto; }
+  .home-masterpieces-panel{ padding: 30px 46px 70px; }
+  .home-master-row{ gap: 18px; }
+}
+
+/* ============================================================
+   Улучшенное главное меню + страница экспоната
+   ============================================================ */
+.home-header--fresh{
+  backdrop-filter: blur(18px);
+  box-shadow: 0 14px 35px rgba(0,0,0,.28);
+}
+
+.home-grid--fresh{
+  background:
+    radial-gradient(circle at 22% 18%, rgba(190,112,104,.22), transparent 34%),
+    radial-gradient(circle at 77% 35%, rgba(112,133,151,.20), transparent 32%),
+    #121414;
+}
+
+.home-hero-link::after,
+.home-photo-panel::after,
+.home-exhibits-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(135deg, rgba(0,0,0,.64), rgba(0,0,0,.12) 46%, rgba(0,0,0,.62));
+  pointer-events:none;
+}
+
+.home-hero-copy{
+  position:absolute;
+  left:38px;
+  right:38px;
+  bottom:58px;
+  z-index:3;
+  display:grid;
+  gap:12px;
+  text-shadow: 0 12px 28px rgba(0,0,0,.75);
+}
+.home-hero-copy b{
+  max-width: 640px;
+  color:#fff;
+  font-size: clamp(28px, 3vw, 54px);
+  line-height:.98;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.home-hero-copy em{
+  max-width: 540px;
+  color:rgba(255,255,255,.78);
+  font-style: normal;
+  font-size: 15px;
+  line-height:1.45;
+}
+
+.home-menu-panel{
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  padding: 38px;
+}
+.home-menu-panel .home-menu-card{
+  height: 100%;
+  min-height: 230px;
+  overflow:hidden;
+  border-color: rgba(255,255,255,.22);
+  background: linear-gradient(160deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 18px 45px rgba(0,0,0,.22);
+}
+.home-menu-panel .home-menu-card::before{
+  content:"";
+  position:absolute;
+  inset:auto -30% -46% -30%;
+  height: 62%;
+  background: radial-gradient(circle, rgba(255,255,255,.16), transparent 58%);
+  transform: rotate(-8deg);
+}
+.home-menu-panel .home-menu-card strong{
+  position: relative;
+  z-index: 2;
+  width: 136px;
+  height: 136px;
+  border-radius: 50%;
+  text-align:center;
+  text-transform: uppercase;
+}
+.home-menu-panel .home-menu-card small{
+  position:absolute;
+  left:24px;
+  right:24px;
+  bottom:22px;
+  z-index: 2;
+  color:rgba(255,255,255,.62);
+  text-align:center;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.home-menu-card--tour strong{ background:#8977ab; }
+
+.home-photo-stat{
+  position:absolute;
+  right:26px;
+  bottom:24px;
+  z-index:2;
+  min-width: 150px;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.2);
+  background: rgba(0,0,0,.38);
+  backdrop-filter: blur(12px);
+  color:#fff;
+}
+.home-photo-stat b{ display:block; font-size:38px; line-height:1; }
+.home-photo-stat span{ display:block; margin-top:8px; color:rgba(255,255,255,.68); font-size:12px; text-transform:uppercase; letter-spacing:1px; }
+
+.home-exhibits-panel .home-master-card{
+  position:relative;
+  z-index:2;
+  border-radius: 16px;
+  box-shadow: 0 24px 55px rgba(0,0,0,.34);
+}
+.home-exhibits-panel .home-master-card span{
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  padding:10px 12px;
+  border-radius:999px;
+  background: rgba(0,0,0,.56);
+  color:#fff;
+  text-align:center;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  opacity:0;
+  transform: translateY(8px);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.home-exhibits-panel .home-master-card:hover span{ opacity:1; transform: translateY(0); }
+
+body.exhibit-page{
+  margin:0;
+  min-height:100vh;
+  overflow:hidden;
+  background:#202223;
+  color:#ededed;
+  font-family:"Trebuchet MS", Arial, sans-serif;
+}
+.exhibit-viewer{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  background: #242526;
+}
+.exhibit-topbar{
+  position:absolute;
+  inset:0 0 auto 0;
+  height:64px;
+  z-index:20;
+  background: rgba(18,19,20,.88);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  backdrop-filter: blur(14px);
+}
+.exhibit-back,.exhibit-home{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  color:rgba(255,255,255,.84);
+  text-decoration:none;
+  padding:0 18px;
+  font-size:14px;
+  line-height:1;
+  letter-spacing:.1px;
+}
+.exhibit-back{
+  left:0;
+}
+.exhibit-home{
+  right:0;
+  text-align:right;
+  justify-content:flex-end;
+}
+.exhibit-back:hover,.exhibit-home:hover{ color:#fff; }
+.exhibit-top-title{
+  position:absolute;
+  left:260px;
+  right:260px;
+  top:50%;
+  transform:translateY(-50%);
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:center;
+  color:rgba(255,255,255,.94);
+  letter-spacing:.1px;
+  font-size:17px;
+  font-weight:600;
+  line-height:1.2;
+  padding:0 20px;
+}
+.exhibit-top-title::before,
+.exhibit-top-title::after{
+  content:none;
+}
+.exhibit-stage{
+  position:absolute;
+  inset:64px 0 0 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  cursor:grab;
+  user-select:none;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,.045), transparent 42%),
+    #242526;
+}
+.exhibit-stage.is-grabbing{ cursor:grabbing; }
+.exhibit-image{
+  max-width: min(76vw, 980px);
+  max-height: calc(100vh - 102px);
+  object-fit:contain;
+  border-radius: 4px;
+  box-shadow: 0 28px 80px rgba(0,0,0,.48);
+  transform-origin:center center;
+  will-change: transform;
+}
+.exhibit-zoom-hint{
+  position:absolute;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  padding:8px 13px;
+  border-radius:999px;
+  background:rgba(0,0,0,.42);
+  color:rgba(255,255,255,.68);
+  font-size:12px;
+  pointer-events:none;
+}
+.exhibit-text-toggle{
+  position:absolute;
+  right:22px;
+  bottom:22px;
+  z-index:30;
+  width:52px;
+  height:52px;
+  border:0;
+  border-radius:50%;
+  background:rgba(17,18,19,.82);
+  color:#fff;
+  font-size:24px;
+  cursor:pointer;
+  box-shadow:0 14px 34px rgba(0,0,0,.35);
+  transition:transform .18s ease, background .18s ease;
+}
+.exhibit-text-toggle:hover{ transform:translateY(-2px) scale(1.04); background:#303234; }
+.exhibit-description{
+  position:absolute;
+  top:54px;
+  left:0;
+  bottom:0;
+  z-index:25;
+  width:min(610px, 92vw);
+  padding:34px 30px 44px;
+  overflow:auto;
+  background:rgba(244,246,248,.96);
+  color:#1d232b;
+  box-shadow:30px 0 70px rgba(0,0,0,.34);
+  transform:translateX(-104%);
+  transition:transform .42s cubic-bezier(.2,.9,.2,1);
+}
+.exhibit-description.is-open{ transform:translateX(0); }
+.exhibit-description__close{
+  position:absolute;
+  top:14px;
+  left:14px;
+  width:32px;
+  height:32px;
+  border:0;
+  background:transparent;
+  color:#56606b;
+  font-size:28px;
+  cursor:pointer;
+}
+.exhibit-description__label{
+  margin:0 0 18px 2px;
+  color:#6d7783;
+  font-size:12px;
+  letter-spacing:1.1px;
+  text-transform:uppercase;
+}
+.exhibit-description h1{
+  margin: 0 0 14px;
+  font-size: 25px;
+  line-height: 1.18;
+  color:#17202b;
+  text-shadow:none;
+}
+.exhibit-description__room{
+  margin-bottom:16px;
+  padding-bottom:14px;
+  border-bottom:1px solid rgba(0,0,0,.16);
+  color:#5b6570;
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.exhibit-description p{
+  white-space:pre-line;
+  font-size:16px;
+  line-height:1.7;
+  text-align:left;
+  color:#242b34;
+}
+.exhibit-description__link{
+  display:inline-flex;
+  margin-top:22px;
+  padding:10px 14px;
+  border-radius:999px;
+  background:#1f2933;
+  color:#fff;
+  text-decoration:none;
+}
+
+@media (max-width: 900px){
+  .home-menu-panel{ grid-template-columns:1fr; padding:22px; }
+  .home-menu-panel .home-menu-card{ min-height:170px; }
+  .home-hero-copy{ left:24px; right:24px; }
+  .exhibit-topbar{
+    height:50px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap:8px;
+    padding:0 10px;
+  }
+  .exhibit-back,.exhibit-home{ font-size:12px; padding:0 8px; }
+  .exhibit-top-title{ max-width:100%; font-size:12px; padding:6px 10px; }
+  .exhibit-stage{ inset:50px 0 0 0; }
+  .exhibit-description{ top:50px; }
+  .exhibit-image{ max-width:92vw; }
+}
+
+
+/* Отключаем браузерные/поисковые панели поверх изображений */
+img,
+.panorama,
+.scene,
+.exhibit-image,
+.home-room-link img,
+.home-slideshow img,
+.home-master-card img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  user-select: none;
+}
+
+
+/* ============================================================
+   Минималистичные панели виртуального тура
+   ============================================================ */
+body.museum{
+  --tour-panel-bg: rgba(17,18,19,.88);
+  --tour-panel-line: rgba(255,255,255,.08);
+  --tour-panel-text: rgba(255,255,255,.92);
+  --tour-panel-muted: rgba(255,255,255,.56);
+  --tour-accent: #0c5fa8;
+}
+
+/* Убираем старые разделы: квест, карта, поиск, экспонаты, экскурсия */
+#btnMap,
+#btnSearch,
+#btnCollection,
+#btnHelp,
+#btnQuest,
+#btnGuide,
+#btnAudio,
+#modalMap,
+#modalSearch,
+#modalCollection,
+#modalHelp,
+#modalQuest,
+#modalGuide,
+#guideWidget,
+#timeline,
+.confetti{
+  display: none !important;
+}
+
+body.has-timeline .info-box{
+  bottom: 16px !important;
+}
+
+.museum-topbar.museum-topbar--minimal{
+  height: 78px;
+  padding: 0 28px;
+  display: grid;
+  grid-template-columns: minmax(310px, 420px) minmax(180px, 1fr) minmax(360px, 520px);
+  align-items: center;
+  gap: 22px;
+  background:
+    linear-gradient(90deg, rgba(18,19,20,.95), rgba(19,22,26,.90)),
+    rgba(17,18,19,.90);
+  border-bottom: 1px solid var(--tour-panel-line);
+  box-shadow: 0 18px 44px rgba(0,0,0,.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.museum-brand{
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--tour-panel-text);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.museum-brand__logo{
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,.28));
+}
+
+.museum-brand span{
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.museum-brand b{
+  font-size: 15px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.museum-brand small{
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--tour-panel-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.museum-topbar__center{
+  justify-self: center;
+  min-width: 0;
+  text-align: center;
+  display: grid;
+  gap: 4px;
+}
+
+.museum-topbar--minimal .museum-title{
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.86);
+  opacity: 1;
+}
+
+.museum-topbar--minimal .museum-room{
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--tour-panel-muted);
+  text-transform: uppercase;
+  opacity: 1;
+}
+
+.museum-room-nav{
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+  background: rgba(12,95,168,.78);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.museum-room-nav a{
+  color: rgba(255,255,255,.90);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  padding: 10px 15px;
+  border-radius: 999px;
+  transition: background .18s ease, transform .18s ease, color .18s ease;
+}
+
+.museum-room-nav a:hover{
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.museum-bottombar{
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 120;
+  width: min(760px, calc(100vw - 36px));
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: var(--tour-panel-bg);
+  border: 1px solid var(--tour-panel-line);
+  box-shadow: 0 18px 48px rgba(0,0,0,.34);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.museum-bottombar__left{
+  display: flex;
+  gap: 8px;
+}
+
+.museum-bottombar .mbtn{
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.92);
+}
+
+.museum-bottombar .mbtn:hover{
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.18);
+}
+
+.museum-arrow-btn{
+  width: 44px;
+  padding: 0;
+  font-size: 18px;
+}
+
+.museum-fullscreen-btn{
+  width: 44px;
+  font-size: 17px;
+}
+
+.museum-bottombar__hint{
+  min-width: 0;
+  text-align: center;
+  color: rgba(255,255,255,.68);
+  font-size: 12px;
+  letter-spacing: .7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.museum-bottombar__hint b{
+  color: rgba(255,255,255,.95);
+  font-weight: 800;
+}
+
+.museum-bottombar__hint span{
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin: 0 12px 2px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.32);
+}
+
+.hint{
+  display: none !important;
+}
+
+@media (max-width: 1100px){
+  .museum-topbar.museum-topbar--minimal{
+    grid-template-columns: minmax(260px, 1fr) auto;
+    height: auto;
+    min-height: 78px;
+    padding: 12px 18px;
+  }
+
+  .museum-topbar__center{
+    display: none;
+  }
+
+  .museum-room-nav{
+    justify-self: end;
+  }
+}
+
+@media (max-width: 760px){
+  .museum-topbar.museum-topbar--minimal{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .museum-brand{
+    justify-content: center;
+  }
+
+  .museum-brand small{
+    display: none;
+  }
+
+  .museum-room-nav{
+    justify-self: stretch;
+    justify-content: center;
+    border-radius: 20px;
+    flex-wrap: wrap;
+  }
+
+  .museum-room-nav a{
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 9px 10px;
+  }
+
+  .museum-bottombar{
+    width: calc(100vw - 24px);
+    bottom: 12px;
+    border-radius: 22px;
+    grid-template-columns: auto auto;
+  }
+
+  .museum-bottombar__hint{
+    grid-column: 1 / -1;
+    grid-row: 1;
+    font-size: 11px;
+  }
+
+  .museum-bottombar__left{
+    grid-column: 1;
+  }
+
+  .museum-fullscreen-btn{
+    grid-column: 2;
+    justify-self: end;
+  }
+}
+
+
+/* ============================================================
+   Галерейные боковые панели виртуального тура
+   ============================================================ */
+body.museum{
+  --gallery-panel: rgba(24,24,24,.74);
+  --gallery-panel-strong: rgba(28,28,28,.88);
+  --gallery-line: rgba(255,255,255,.18);
+  --gallery-text: rgba(255,255,255,.86);
+  --gallery-muted: rgba(255,255,255,.55);
+}
+
+#btnMap,
+#btnSearch,
+#btnCollection,
+#btnHelp,
+#btnQuest,
+#btnGuide,
+#btnAudio,
+#modalMap,
+#modalSearch,
+#modalCollection,
+#modalHelp,
+#modalQuest,
+#modalGuide,
+#guideWidget,
+#timeline,
+.confetti{
+  display: none !important;
+}
+
+.museum-topbar.museum-topbar--gallery{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  background: rgba(20,20,20,.58);
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: none;
+}
+
+.museum-top-icon{
+  position: absolute;
+  top: 9px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: rgba(255,255,255,.88);
+  text-decoration: none;
+  opacity: .88;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.museum-top-icon:hover{
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.museum-top-icon--home{ left: 48px; }
+.museum-top-icon--museum{
+  left: 96px;
+  font-size: 28px;
+  line-height: 1;
+  border: 2px solid rgba(255,255,255,.78);
+  border-radius: 2px;
+}
+
+.museum-top-icon img{
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: brightness(1.65) grayscale(.15);
+}
+
+.museum-gallery-title{
+  max-width: min(760px, 58vw);
+  color: rgba(255,255,255,.64);
+  font-size: 14px;
+  letter-spacing: 1.6px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.museum-gallery-title small{
+  display: inline;
+  margin-left: 10px;
+  color: rgba(255,255,255,.45);
+  font-size: 13px;
+}
+
+.museum-room-nav,
+.museum-bottombar:not(.museum-bottombar--gallery),
+.museum-brand,
+.museum-topbar__center{
+  display: none !important;
+}
+
+.museum-side-toggle{
+  position: fixed;
+  top: 50%;
+  z-index: 260;
+  width: 46px;
+  height: 96px;
+  transform: translateY(-50%);
+  border: 0;
+  background: rgba(20,20,20,.42);
+  color: rgba(255,255,255,.78);
+  font-family: Georgia, serif;
+  font-size: 58px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .22s ease, opacity .22s ease, transform .22s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.museum-side-toggle:hover{
+  background: rgba(20,20,20,.68);
+  color: #fff;
+}
+
+.museum-side-toggle--left{ left: 0; border-radius: 0 10px 10px 0; }
+.museum-side-toggle--right{ right: 0; border-radius: 10px 0 0 10px; }
+
+.museum-side-panel{
+  position: fixed;
+  inset: 0;
+  z-index: 280;
+  pointer-events: none;
+}
+
+.museum-side-panel.is-open{
+  pointer-events: auto;
+}
+
+.museum-side-panel__shade{
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: rgba(0,0,0,.02);
+  transition: opacity .34s ease;
+}
+
+.museum-side-panel.is-open .museum-side-panel__shade{
+  opacity: 1;
+}
+
+.museum-left-drawer{
+  position: absolute;
+  top: 54px;
+  bottom: 0;
+  left: 0;
+  width: min(560px, 45vw);
+  padding: 28px 48px 72px;
+  background: linear-gradient(90deg, rgba(20,20,20,.72), rgba(20,20,20,.44) 78%, rgba(20,20,20,0));
+  color: var(--gallery-text);
+  transform: translateX(-104%);
+  opacity: .25;
+  transition: transform .44s cubic-bezier(.22,.84,.26,1), opacity .35s ease;
+  overflow-y: auto;
+}
+
+.museum-side-panel.is-open .museum-left-drawer{
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.museum-right-drawer{
+  position: absolute;
+  top: 54px;
+  right: 0;
+  bottom: 0;
+  width: min(520px, 38vw);
+  padding: 26px 34px 72px;
+  background: linear-gradient(270deg, rgba(24,24,24,.88), rgba(24,24,24,.78) 80%, rgba(24,24,24,0));
+  color: var(--gallery-text);
+  transform: translateX(104%);
+  opacity: .25;
+  transition: transform .44s cubic-bezier(.22,.84,.26,1), opacity .35s ease;
+  overflow-y: auto;
+}
+
+.museum-side-panel.is-open .museum-right-drawer{
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.museum-drawer-tabs{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 44px;
+  margin: 0 30px 28px 30px;
+}
+
+.museum-drawer-tab{
+  height: 48px;
+  border: 0;
+  background: rgba(18,18,18,.58);
+  color: rgba(255,255,255,.82);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+
+.museum-drawer-tab.is-active{
+  background: rgba(105,38,40,.58);
+  color: #fff;
+}
+
+.museum-drawer-page{
+  display: none;
+}
+
+.museum-drawer-page.is-active{
+  display: block;
+  animation: museumDrawerFade .28s ease both;
+}
+
+@keyframes museumDrawerFade{
+  from{ opacity: 0; transform: translateY(8px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+
+.museum-plan-card{
+  margin-top: 20px;
+  padding: 24px 24px 18px;
+  background: rgba(140,140,140,.82);
+  border: 1px solid rgba(255,255,255,.2);
+  box-shadow: 0 22px 60px rgba(0,0,0,.22);
+}
+
+.museum-plan-map{
+  position: relative;
+  height: 178px;
+  background:
+    linear-gradient(90deg, transparent 0 13%, rgba(255,255,255,.50) 13% 14%, transparent 14% 100%),
+    linear-gradient(180deg, transparent 0 49%, rgba(255,255,255,.50) 49% 50%, transparent 50% 100%);
+}
+
+.museum-plan-room{
+  position: absolute;
+  border: 2px solid rgba(255,255,255,.88);
+  background: rgba(170,75,80,.72);
+  color: rgba(255,255,255,.86);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.museum-plan-room:nth-child(1){ left: 0; top: 12%; width: 25%; height: 70%; background: rgba(185,143,84,.78); }
+.museum-plan-room:nth-child(2){ left: 25%; top: 36%; width: 22%; height: 34%; background: rgba(150,150,150,.76); }
+.museum-plan-room:nth-child(3){ left: 47%; top: 22%; width: 28%; height: 48%; background: rgba(128,143,160,.76); }
+.museum-plan-room:nth-child(4){ left: 75%; top: 8%; width: 25%; height: 62%; background: rgba(151,62,71,.78); }
+
+.museum-plan-room.is-current{
+  outline: 3px solid rgba(255,255,255,.82);
+  box-shadow: 0 0 0 6px rgba(255,255,255,.14), inset 0 0 28px rgba(0,0,0,.2);
+}
+
+.museum-plan-viewer{
+  position: absolute;
+  left: var(--viewer-x, 50%);
+  top: var(--viewer-y, 50%);
+  width: 15px;
+  height: 15px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid rgba(80,80,80,.75);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.22);
+}
+
+.museum-plan-viewer::after{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%) rotate(var(--viewer-angle, 0deg));
+  clip-path: polygon(50% 50%, 100% 22%, 100% 78%);
+  background: rgba(255,255,255,.24);
+}
+
+.museum-plan-legend{
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.museum-plan-legend span{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.museum-plan-legend i{
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255,255,255,.72);
+}
+
+.legend-blue{ background: rgba(128,143,160,.9); }
+.legend-red{ background: rgba(151,62,71,.9); }
+.legend-gold{ background: rgba(185,143,84,.9); }
+
+.museum-floor-switch{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 28px 0 0 6px;
+  color: rgba(255,255,255,.9);
+  font-size: 18px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.museum-floor-switch button{
+  width: 48px;
+  height: 48px;
+  border: 0;
+  background: rgba(255,255,255,.42);
+  color: rgba(255,255,255,.86);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.museum-floor-switch button.is-active{
+  background: rgba(0,0,0,.55);
+}
+
+.museum-views-list{
+  display: grid;
+  gap: 28px;
+  padding: 8px 22px 40px;
+}
+
+.museum-view-card{
+  min-height: 168px;
+  border: 2px solid rgba(255,255,255,.72);
+  position: relative;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  color: #fff;
+  background: rgba(0,0,0,.35);
+  box-shadow: 0 18px 42px rgba(0,0,0,.24);
+}
+
+.museum-view-card img{
+  width: 100%;
+  height: 100%;
+  min-height: 168px;
+  object-fit: cover;
+  display: block;
+  filter: brightness(.82);
+}
+
+.museum-view-card span{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px 18px;
+  background: linear-gradient(0deg, rgba(0,0,0,.72), rgba(0,0,0,.12));
+  font-size: 17px;
+  letter-spacing: .7px;
+}
+
+.museum-exhibit-heading{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 0 28px;
+  color: rgba(255,255,255,.82);
+  font-size: 20px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.museum-exhibit-heading button{
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.7);
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.museum-room-exhibits{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding-right: 18px;
+}
+
+.museum-exhibit-card{
+  min-height: 214px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.04);
+  color: #fff;
+  text-decoration: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.museum-exhibit-card:hover{
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.35);
+  background: rgba(255,255,255,.07);
+}
+
+.museum-exhibit-card img{
+  width: 100%;
+  height: 126px;
+  object-fit: cover;
+  display: block;
+  filter: brightness(.9);
+}
+
+.museum-exhibit-card strong{
+  display: block;
+  padding: 12px 12px 6px;
+  font-size: 12px;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.museum-exhibit-card small{
+  display: block;
+  padding: 0 12px 12px;
+  color: rgba(255,255,255,.62);
+  font-size: 11px;
+  font-style: italic;
+}
+
+.museum-bottombar.museum-bottombar--gallery{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 250;
+  height: 46px;
+  min-height: 0;
+  width: auto;
+  transform: none;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18px;
+  border: 0;
+  border-radius: 0;
+  background: rgba(20,20,20,.45);
+  box-shadow: none;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.museum-bottom-icon{
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.66);
+  text-decoration: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .18s ease, transform .18s ease;
+}
+
+.museum-bottom-icon:hover{
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.museum-bottom-icon--info{
+  margin-left: auto;
+  font-size: 19px;
+}
+
+@media (max-width: 1000px){
+  .museum-left-drawer,
+  .museum-right-drawer{
+    width: min(92vw, 560px);
+  }
+
+  .museum-gallery-title{
+    max-width: 48vw;
+  }
+}
+
+@media (max-width: 700px){
+  .museum-top-icon--home{ left: 14px; }
+  .museum-top-icon--museum{ left: 62px; }
+  .museum-gallery-title{
+    max-width: 48vw;
+    font-size: 12px;
+  }
+  .museum-left-drawer,
+  .museum-right-drawer{
+    top: 54px;
+    width: 100vw;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .museum-room-exhibits{
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   Исправление бокового меню: блокировка камеры, картинки залов, план
+   ============================================================ */
+body.museum-panel-open .scene{
+  pointer-events: none;
+}
+
+body.museum-panel-open .museum-side-panel.is-open,
+body.museum-panel-open .museum-side-panel.is-open *{
+  pointer-events: auto;
+}
+
+.museum-side-panel.is-open{
+  cursor: default;
+}
+
+.museum-side-panel__shade{
+  background: rgba(0,0,0,.10);
+}
+
+.museum-plan-card{
+  width: min(410px, 86vw);
+  margin: 18px auto 0;
+  padding: 8px;
+  background: #626667;
+  border: 0;
+  box-shadow: 0 24px 70px rgba(0,0,0,.34);
+}
+
+.museum-plan-map{
+  height: 700px;
+  background: transparent;
+  border: 7px solid rgba(255,255,255,.92);
+}
+
+.museum-plan-room{
+  border: 6px solid rgba(255,255,255,.92);
+  color: transparent;
+  font-size: 0;
+  place-items: initial;
+}
+
+.museum-plan-room:nth-child(1){
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 29%;
+  background: #bd9f66;
+}
+
+.museum-plan-room:nth-child(4){
+  left: 0;
+  top: 29%;
+  width: 46%;
+  height: 71%;
+  background: #9d505d;
+}
+
+.museum-plan-room:nth-child(2){
+  left: 46%;
+  top: 29%;
+  width: 54%;
+  height: 38%;
+  background: #a9abad;
+}
+
+.museum-plan-room:nth-child(3){
+  left: 46%;
+  top: 67%;
+  width: 54%;
+  height: 33%;
+  background: #8798a6;
+}
+
+.museum-plan-room.is-current{
+  outline: 4px solid rgba(255,255,255,.95);
+  outline-offset: -14px;
+  box-shadow: inset 0 0 0 999px rgba(255,255,255,.04), 0 0 0 4px rgba(0,0,0,.18);
+}
+
+.museum-plan-viewer{
+  z-index: 5;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  background: #fff;
+  border: 0;
+  box-shadow: 0 0 0 6px rgba(255,255,255,.14);
+}
+
+.museum-plan-viewer::after{
+  width: 76px;
+  height: 76px;
+  background: rgba(255,255,255,.42);
+  clip-path: polygon(50% 50%, 28% 0, 72% 0);
+}
+
+.museum-plan-legend{
+  display: none;
+}
+
+.museum-floor-switch{
+  justify-content: center;
+}
+
+.museum-view-card img{
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+@media (max-width: 700px){
+  .museum-plan-map{
+    height: 620px;
+  }
+}
+
+
+/* ============================================================
+   План картинкой + вращающийся индикатор посетителя
+   ============================================================ */
+body.museum-panel-open .scene,
+body.museum-panel-open .image-wrapper,
+body.museum-panel-open #backgroundImage,
+body.museum-panel-open #pointsContainer{
+  pointer-events: none !important;
+}
+
+body.museum-panel-open .museum-side-panel.is-open{
+  pointer-events: auto !important;
+}
+
+.museum-plan-card{
+  width: min(288px, 82vw);
+  padding: 0;
+  margin-top: 10px;
+  background: transparent;
+  border: 0;
+  box-shadow: 0 24px 70px rgba(0,0,0,.34);
+}
+
+.museum-plan-map.museum-plan-map--image{
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+}
+
+.museum-plan-scheme{
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+}
+
+.museum-plan-viewer-img{
+  position: absolute;
+  z-index: 8;
+  width: 42px;
+  height: 42px;
+  left: 50%;
+  top: 17%;
+  transform: translate(-50%, -50%) rotate(0deg);
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.28));
+  pointer-events: none;
+  user-select: none;
+}
+
+.museum-plan-map .museum-plan-viewer,
+.museum-plan-room{
+  display: none !important;
+}
+
+.museum-plan-hotspots{
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+}
+
+.museum-plan-hotspot{
+  position: absolute;
+  display: block;
+  background: rgba(255,255,255,0);
+}
+
+.museum-plan-hotspot--1{ left: 0; top: 0; width: 100%; height: 29%; }
+.museum-plan-hotspot--4{ left: 0; top: 29%; width: 46%; height: 71%; }
+.museum-plan-hotspot--2{ left: 46%; top: 29%; width: 54%; height: 38%; }
+.museum-plan-hotspot--3{ left: 46%; top: 67%; width: 54%; height: 33%; }
+
+.museum-plan-hotspot:hover{
+  background: rgba(255,255,255,.08);
+}
+
+.museum-plan-legend{
+  display: none !important;
+}
+
+.museum-floor-switch{
+  margin-top: 22px;
+}
+
+/* Делаем затемняющий слой реально перехватывающим, чтобы мышь не попадала на панораму */
+.museum-side-panel.is-open .museum-side-panel__shade{
+  pointer-events: auto !important;
+  cursor: default;
+}
+
+
+/* ============================================================
+   ФИНАЛ: план без картинок, без этажей, индикатор CSS
+   ============================================================ */
+.museum-plan-card{
+  width: 278px !important;
+  margin: 14px auto 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.34) !important;
+}
+
+.museum-plan-map.museum-plan-map--scheme{
+  position: relative !important;
+  width: 278px !important;
+  height: 550px !important;
+  min-height: 550px !important;
+  background: #5f6364 !important;
+  border: 5px solid rgba(255,255,255,.92) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.museum-plan-scheme,
+.museum-plan-viewer-img,
+.museum-plan-map .museum-plan-viewer,
+.museum-plan-room,
+.museum-plan-hotspots,
+.museum-floor-switch{
+  display: none !important;
+}
+
+.museum-plan-room-css{
+  position: absolute !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  border: 3px solid rgba(255,255,255,.88) !important;
+  color: rgba(255,255,255,.62) !important;
+  text-decoration: none !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  padding: 6px !important;
+  transition: filter .18s ease, box-shadow .18s ease;
+}
+
+.museum-plan-room-css:hover{
+  filter: brightness(1.08);
+  box-shadow: inset 0 0 0 999px rgba(255,255,255,.06);
+}
+
+.museum-plan-room-css.is-current{
+  box-shadow:
+    inset 0 0 0 999px rgba(255,255,255,.08),
+    inset 0 0 0 4px rgba(255,255,255,.62) !important;
+}
+
+.museum-plan-room-css--1{
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 29% !important;
+  background: #b99b63 !important;
+  color: transparent !important;
+}
+
+.museum-plan-room-css--4{
+  left: 0 !important;
+  top: 29% !important;
+  width: 46% !important;
+  height: 71% !important;
+  background: #9b4b59 !important;
+}
+
+.museum-plan-room-css--2{
+  left: 46% !important;
+  top: 29% !important;
+  width: 54% !important;
+  height: 38% !important;
+  background: #a5a7a9 !important;
+  text-align: right !important;
+}
+
+.museum-plan-room-css--3{
+  left: 46% !important;
+  top: 67% !important;
+  width: 54% !important;
+  height: 33% !important;
+  background: #8798a6 !important;
+}
+
+.museum-plan-viewer-css{
+  position: absolute !important;
+  z-index: 20 !important;
+  width: 34px !important;
+  height: 34px !important;
+  transform: translate(-50%, -50%) rotate(0deg);
+  transform-origin: 50% 50%;
+  pointer-events: none !important;
+}
+
+.museum-plan-viewer-css::before{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  width: 36px;
+  height: 36px;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,.92);
+  clip-path: polygon(50% 0, 0 70%, 50% 48%, 100% 70%);
+}
+
+.museum-plan-viewer-css::after{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0,0,0,.42);
+}
+
+.museum-plan-legend{
+  display: none !important;
+}
+
+/* Во время открытой панели камера точно не вращается */
+body.museum-panel-open #scene,
+body.museum-panel-open #imageWrapper,
+body.museum-panel-open #backgroundImage,
+body.museum-panel-open #pointsContainer{
+  pointer-events: none !important;
+  touch-action: none !important;
+}
+
+body.museum-panel-open .museum-side-panel.is-open,
+body.museum-panel-open .museum-side-panel.is-open *,
+body.museum-panel-open .museum-side-toggle{
+  pointer-events: auto !important;
+}
+
+@media (max-width: 700px){
+  .museum-plan-map.museum-plan-map--scheme{
+    width: 260px !important;
+    height: 515px !important;
+    min-height: 515px !important;
+  }
+}
+
+
+/* ============================================================
+   ФИНАЛ 2: пользовательский план/индикатор + камера вращается при открытом меню
+   ============================================================ */
+
+/* Убираем все прошлые CSS-блокировки панорамы */
+body.museum-panel-open .scene,
+body.museum-panel-open #scene,
+body.museum-panel-open .image-wrapper,
+body.museum-panel-open #imageWrapper,
+body.museum-panel-open #backgroundImage,
+body.museum-panel-open #pointsContainer{
+  pointer-events: auto !important;
+  touch-action: none !important;
+}
+
+/* Панель открыта, но прозрачная область НЕ мешает двигать камеру */
+.museum-side-panel,
+.museum-side-panel.is-open,
+.museum-side-panel__shade,
+.museum-side-panel.is-open .museum-side-panel__shade{
+  pointer-events: none !important;
+}
+
+.museum-left-drawer,
+.museum-right-drawer{
+  pointer-events: none !important;
+}
+
+/* Нажимаются только реальные элементы меню */
+.museum-drawer-tabs,
+.museum-drawer-tab,
+.museum-plan-map,
+.museum-plan-hotspots,
+.museum-plan-hotspot,
+.museum-views-list,
+.museum-view-card,
+.museum-room-exhibits,
+.museum-exhibit-card,
+.museum-exhibit-heading button{
+  pointer-events: auto !important;
+}
+
+/* Именно твой план картинкой */
+.museum-plan-card{
+  width: 280px !important;
+  margin: 14px auto 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.34) !important;
+}
+
+.museum-plan-map.museum-plan-map--image{
+  position: relative !important;
+  width: 280px !important;
+  height: 550px !important;
+  min-height: 550px !important;
+  background: transparent !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
+.museum-plan-scheme{
+  display: block !important;
+  width: 280px !important;
+  height: 550px !important;
+  object-fit: contain !important;
+  user-select: none !important;
+  pointer-events: none !important;
+}
+
+.museum-plan-viewer-img{
+  display: block !important;
+  position: absolute !important;
+  z-index: 20 !important;
+  width: 30px !important;
+  height: 38px !important;
+  left: 50%;
+  top: 16%;
+  transform: translate(-50%, -50%) rotate(0deg);
+  transform-origin: 50% 50%;
+  pointer-events: none !important;
+  user-select: none !important;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.35));
+}
+
+/* Полностью прячем нарисованный CSS-план и этажи */
+.museum-plan-room-css,
+.museum-plan-viewer-css,
+.museum-plan-room,
+.museum-plan-viewer,
+.museum-floor-switch,
+.museum-plan-legend{
+  display: none !important;
+}
+
+/* Прозрачные кликабельные зоны поверх твоей картинки */
+.museum-plan-hotspots{
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 15 !important;
+}
+
+.museum-plan-hotspot{
+  position: absolute !important;
+  display: block !important;
+  background: rgba(255,255,255,0) !important;
+}
+
+.museum-plan-hotspot--1{ left: 0 !important; top: 0 !important; width: 100% !important; height: 29% !important; }
+.museum-plan-hotspot--4{ left: 0 !important; top: 29% !important; width: 46% !important; height: 71% !important; }
+.museum-plan-hotspot--2{ left: 46% !important; top: 29% !important; width: 54% !important; height: 38% !important; }
+.museum-plan-hotspot--3{ left: 46% !important; top: 67% !important; width: 54% !important; height: 33% !important; }
+
+.museum-plan-hotspot:hover{
+  background: rgba(255,255,255,.08) !important;
+}
+
+@media (max-width: 700px){
+  .museum-plan-card,
+  .museum-plan-map.museum-plan-map--image,
+  .museum-plan-scheme{
+    width: 260px !important;
+  }
+  .museum-plan-map.museum-plan-map--image,
+  .museum-plan-scheme{
+    height: 511px !important;
+    min-height: 511px !important;
+  }
+}
+
+
+/* ============================================================
+   Видимые индикаторы комнат под планом
+   ============================================================ */
+.museum-plan-legend{
+  display: none !important;
+}
+
+.museum-plan-room-legend{
+  width: 280px !important;
+  margin: 18px auto 0 !important;
+  display: grid !important;
+  gap: 10px !important;
+  position: relative !important;
+  z-index: 30 !important;
+}
+
+.museum-plan-legend-item{
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  color: rgba(255,255,255,.90) !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  letter-spacing: .7px !important;
+  pointer-events: auto !important;
+  transition: color .18s ease, transform .18s ease;
+}
+
+.museum-plan-legend-item:hover{
+  color: #fff !important;
+  transform: translateX(2px);
+}
+
+.museum-plan-legend-item i{
+  width: 13px !important;
+  height: 13px !important;
+  flex: 0 0 13px !important;
+  border: 2px solid rgba(255,255,255,.85) !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 2px 7px rgba(0,0,0,.25) !important;
+}
+
+.museum-plan-legend-item span{
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.museum-plan-legend-item--1 i{ background: #b99b63 !important; }
+.museum-plan-legend-item--2 i{ background: #a5a7a9 !important; }
+.museum-plan-legend-item--3 i{ background: #8798a6 !important; }
+.museum-plan-legend-item--4 i{ background: #9b4b59 !important; }
+
+body.museum-room-1 .museum-plan-legend-item--1,
+body.museum-room-2 .museum-plan-legend-item--2,
+body.museum-room-3 .museum-plan-legend-item--3,
+body.museum-room-4 .museum-plan-legend-item--4{
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+body.museum-room-1 .museum-plan-legend-item--1 i,
+body.museum-room-2 .museum-plan-legend-item--2 i,
+body.museum-room-3 .museum-plan-legend-item--3 i,
+body.museum-room-4 .museum-plan-legend-item--4 i{
+  box-shadow: 0 0 0 3px rgba(255,255,255,.18), 0 2px 7px rgba(0,0,0,.25) !important;
+}
+
+/* Разрешаем клик по индикаторам даже когда панель поверх панорамы */
+.museum-plan-room-legend,
+.museum-plan-room-legend *{
+  pointer-events: auto !important;
+}
+
+@media (max-width: 700px){
+  .museum-plan-room-legend{
+    width: 260px !important;
+  }
+  .museum-plan-legend-item{
+    font-size: 13px !important;
+  }
+}
+
+
+/* ============================================================
+   Используем старую левую стрелку как кнопку закрытия
+   ============================================================ */
+.museum-left-panel-close{
+  display: none !important;
+}
+
+.museum-side-toggle--left{
+  z-index: 360 !important;
+}
+
+/* Когда открыт план, старая стрелка смещается перед планом и закрывает его */
+body.museum-left-panel-open .museum-side-toggle--left{
+  left: 34px !important;
+  top: 56% !important;
+  width: 62px !important;
+  height: 86px !important;
+  border-radius: 0 14px 14px 0 !important;
+  background: rgba(18,18,18,.76) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: 0 16px 38px rgba(0,0,0,.34) !important;
+  color: rgba(255,255,255,.82) !important;
+}
+
+body.museum-left-panel-open .museum-side-toggle--left:hover{
+  background: rgba(26,26,26,.94) !important;
+  color: #fff !important;
+}
+
+/* Правая стрелка тоже закрывает правую панель при повторном нажатии */
+body.museum-right-panel-open .museum-side-toggle--right{
+  z-index: 360 !important;
+}
+
+@media (max-width: 700px){
+  body.museum-left-panel-open .museum-side-toggle--left{
+    left: 12px !important;
+    width: 52px !important;
+    height: 76px !important;
+  }
+}
+
+
+/* ============================================================
+   Стрелки как в примере: старая кнопка на краю открытой панели
+   ============================================================ */
+
+/* Убираем прошлое смещение стрелки внутрь */
+body.museum-left-panel-open .museum-side-toggle--left{
+  left: min(560px, 45vw) !important;
+  top: 50% !important;
+  width: 54px !important;
+  height: 96px !important;
+  transform: translate(-50%, -50%) !important;
+  border-radius: 10px !important;
+  background: rgba(18,18,18,.64) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.34) !important;
+  color: rgba(255,255,255,.86) !important;
+  z-index: 420 !important;
+}
+
+body.museum-left-panel-open .museum-side-toggle--left:hover{
+  background: rgba(18,18,18,.88) !important;
+  color: #fff !important;
+}
+
+/* Правая панель: старая правая стрелка становится на левый край открытой панели */
+body.museum-right-panel-open .museum-side-toggle--right{
+  right: min(520px, 38vw) !important;
+  top: 50% !important;
+  width: 54px !important;
+  height: 96px !important;
+  transform: translate(50%, -50%) !important;
+  border-radius: 10px !important;
+  background: rgba(18,18,18,.64) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.34) !important;
+  color: rgba(255,255,255,.86) !important;
+  z-index: 420 !important;
+}
+
+body.museum-right-panel-open .museum-side-toggle--right:hover{
+  background: rgba(18,18,18,.88) !important;
+  color: #fff !important;
+}
+
+@media (max-width: 1000px){
+  body.museum-left-panel-open .museum-side-toggle--left{
+    left: min(560px, 92vw) !important;
+  }
+
+  body.museum-right-panel-open .museum-side-toggle--right{
+    right: min(560px, 92vw) !important;
+  }
+}
+
+@media (max-width: 700px){
+  body.museum-left-panel-open .museum-side-toggle--left{
+    left: 100vw !important;
+    width: 48px !important;
+    height: 82px !important;
+  }
+
+  body.museum-right-panel-open .museum-side-toggle--right{
+    right: 100vw !important;
+    width: 48px !important;
+    height: 82px !important;
+  }
+}
+
+
+/* ============================================================
+   Плавное движение стрелок вместе с боковым меню
+   ============================================================ */
+.museum-side-toggle{
+  transition:
+    left .44s cubic-bezier(.22,.84,.26,1),
+    right .44s cubic-bezier(.22,.84,.26,1),
+    transform .44s cubic-bezier(.22,.84,.26,1),
+    background .22s ease,
+    color .22s ease,
+    opacity .22s ease !important;
+  will-change: left, right, transform;
+}
+
+body.museum-left-panel-open .museum-side-toggle--left{
+  transition:
+    left .44s cubic-bezier(.22,.84,.26,1),
+    transform .44s cubic-bezier(.22,.84,.26,1),
+    background .22s ease,
+    color .22s ease !important;
+}
+
+body.museum-right-panel-open .museum-side-toggle--right{
+  transition:
+    right .44s cubic-bezier(.22,.84,.26,1),
+    transform .44s cubic-bezier(.22,.84,.26,1),
+    background .22s ease,
+    color .22s ease !important;
+}
+
+
+/* ============================================================
+   Админ-редактор точек и экспонатов
+   ============================================================ */
+.admin-login-page{
+  min-height:100vh;
+  margin:0;
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle at 25% 20%, rgba(155,75,89,.22), transparent 34%),
+    radial-gradient(circle at 75% 70%, rgba(135,152,166,.2), transparent 32%),
+    #111315;
+  color:#fff;
+  font-family:"Trebuchet MS", Arial, sans-serif;
+}
+
+.admin-login-card{
+  width:min(420px, calc(100vw - 32px));
+  padding:34px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;
+  background:rgba(22,24,27,.86);
+  box-shadow:0 24px 70px rgba(0,0,0,.38);
+  display:grid;
+  gap:16px;
+}
+
+.admin-login-card h1{ margin:0; letter-spacing:1.5px; text-transform:uppercase; }
+.admin-login-card p{ margin:0 0 6px; color:rgba(255,255,255,.65); line-height:1.45; }
+.admin-login-card label{ display:grid; gap:8px; color:rgba(255,255,255,.78); font-size:13px; text-transform:uppercase; letter-spacing:1px; }
+.admin-login-card input{
+  height:42px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:12px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  padding:0 12px;
+  outline:none;
+}
+.admin-login-card button{
+  height:44px;
+  border:0;
+  border-radius:12px;
+  background:#9b4b59;
+  color:#fff;
+  font-weight:800;
+  letter-spacing:1px;
+  cursor:pointer;
+}
+.admin-login-card small{ color:rgba(255,255,255,.5); }
+.admin-login-back{ color:rgba(255,255,255,.72); text-decoration:none; }
+.admin-login-error{
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(190,65,65,.18);
+  color:#ffb7b7;
+}
+
+.admin-editor-panel{
+  position:fixed;
+  right:18px;
+  top:70px;
+  z-index:2000;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px;
+  border-radius:16px;
+  background:rgba(18,18,18,.78);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 16px 40px rgba(0,0,0,.35);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+.admin-editor-panel__title{
+  color:#fff;
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:0 6px;
+}
+
+.admin-editor-panel button,
+.admin-editor-panel a{
+  height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 12px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  text-decoration:none;
+  font-size:12px;
+  cursor:pointer;
+}
+
+.admin-editor-panel button.is-active{
+  background:#9b4b59;
+}
+
+body.admin-edit-mode .point{
+  outline:2px dashed rgba(255,255,255,.72);
+  outline-offset:5px;
+  cursor:grab;
+}
+
+body.admin-edit-mode .point:active{
+  cursor:grabbing;
+}
+
+body.admin-add-mode .scene{
+  cursor:crosshair;
+}
+
+.admin-notice{
+  position:fixed;
+  left:50%;
+  top:84px;
+  transform:translateX(-50%) translateY(-12px);
+  z-index:2100;
+  opacity:0;
+  pointer-events:none;
+  padding:11px 16px;
+  border-radius:999px;
+  background:rgba(22,22,22,.88);
+  color:#fff;
+  box-shadow:0 14px 38px rgba(0,0,0,.32);
+  transition:opacity .2s ease, transform .2s ease;
+}
+
+.admin-notice.is-open{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+.admin-notice.is-error{
+  background:rgba(150,30,30,.92);
+}
+
+.admin-point-modal{
+  position:fixed;
+  inset:0;
+  z-index:2200;
+  display:none;
+  place-items:center;
+  padding:24px;
+  background:rgba(0,0,0,.52);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.admin-point-modal.is-open{
+  display:grid;
+}
+
+.admin-point-form{
+  position:relative;
+  width:min(680px, calc(100vw - 32px));
+  max-height:calc(100vh - 48px);
+  overflow:auto;
+  display:grid;
+  gap:14px;
+  padding:28px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#181b1f;
+  color:#fff;
+  box-shadow:0 28px 90px rgba(0,0,0,.48);
+}
+
+.admin-point-form h2{
+  margin:0 0 4px;
+  text-transform:uppercase;
+  letter-spacing:1.4px;
+}
+
+.admin-point-form__close{
+  position:absolute;
+  right:16px;
+  top:12px;
+  width:38px;
+  height:38px;
+  border:0;
+  background:transparent;
+  color:rgba(255,255,255,.7);
+  font-size:30px;
+  cursor:pointer;
+}
+
+.admin-form-grid{
+  display:grid;
+  grid-template-columns:1.4fr 1fr 1fr;
+  gap:12px;
+}
+
+.admin-point-form label{
+  display:grid;
+  gap:7px;
+  color:rgba(255,255,255,.72);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.admin-point-form input,
+.admin-point-form textarea,
+.admin-point-form select{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  padding:11px 12px;
+  outline:none;
+  font:inherit;
+}
+
+.admin-point-form textarea{
+  resize:vertical;
+  min-height:150px;
+  line-height:1.45;
+}
+
+.admin-point-form option{
+  color:#111;
+}
+
+.admin-nav-fields{
+  display:none;
+}
+
+body.admin-form-nav .admin-info-fields{
+  display:none;
+}
+
+body.admin-form-nav .admin-nav-fields{
+  display:grid;
+}
+
+.admin-info-fields{
+  display:grid;
+  gap:14px;
+}
+
+.admin-point-actions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+}
+
+.admin-point-actions button{
+  height:42px;
+  border:0;
+  border-radius:12px;
+  padding:0 18px;
+  background:#9b4b59;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.admin-point-actions button.danger{
+  background:#7a2d32;
+}
+
+@media (max-width: 760px){
+  .admin-editor-panel{
+    left:12px;
+    right:12px;
+    top:auto;
+    bottom:58px;
+    flex-wrap:wrap;
+  }
+
+  .admin-form-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* ============================================================
+   Фикс названия зала и легенды плана
+   ============================================================ */
+.museum-gallery-title{
+  max-width: min(980px, 70vw) !important;
+}
+
+.museum-gallery-title span{
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.museum-gallery-title small{
+  display: none !important;
+}
+
+.museum-plan-room-legend{
+  width: 340px !important;
+  max-width: calc(100vw - 42px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.museum-plan-legend-item{
+  align-items: flex-start !important;
+  gap: 10px !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  letter-spacing: .55px !important;
+}
+
+.museum-plan-legend-item span{
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+}
+
+.museum-plan-legend-item i{
+  margin-top: 2px !important;
+}
+
+@media (max-width: 700px){
+  .museum-plan-room-legend{
+    width: 300px !important;
+  }
+
+  .museum-plan-legend-item{
+    font-size: 12px !important;
+  }
+}
+
+
+/* ============================================================
+   Главное меню: убрать синюю навигацию и показать название экспоната
+   ============================================================ */
+body.site.museum-home .home-header{
+  grid-template-columns: minmax(320px, auto) 1fr auto !important;
+  justify-content: space-between !important;
+}
+
+body.site.museum-home .home-header .home-nav{
+  display: none !important;
+}
+
+body.site.museum-home .home-culture{
+  justify-self: end !important;
+}
+
+.home-master-card span{
+  min-height: 48px;
+  padding: 12px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+  letter-spacing: 1px !important;
+  text-transform: none !important;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .22s ease, transform .22s ease, background .22s ease;
+}
+
+.home-master-card:hover span{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 900px){
+  body.site.museum-home .home-header{
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* ============================================================
+   Возврат верхней панели: логотип ЛДПК левее, второй значок скрыт
+   ============================================================ */
+
+/* убираем непонятный второй значок */
+.museum-top-icon--museum{
+  display: none !important;
+}
+
+/* логотип ЛДПК переносим левее */
+.museum-top-icon--home{
+  left: 18px !important;
+}
+
+/* возвращаем аккуратный обычный вид логотипа */
+.museum-top-icon{
+  top: 8px !important;
+  width: 42px !important;
+  height: 42px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  opacity: .95 !important;
+}
+
+.museum-top-icon:hover{
+  opacity: 1 !important;
+  transform: translateY(-1px) !important;
+}
+
+.museum-top-icon img{
+  width: 42px !important;
+  height: 42px !important;
+  object-fit: contain !important;
+}
+
+/* чтобы название по центру не уезжало из-за скрытого значка */
+.museum-gallery-title{
+  padding-left: 80px !important;
+  padding-right: 80px !important;
+}
+
+@media (max-width: 700px){
+  .museum-top-icon--home{
+    left: 10px !important;
+  }
+
+  .museum-gallery-title{
+    padding-left: 62px !important;
+    padding-right: 18px !important;
+  }
+}
+
+/* ============================================================
+   Админ: статистика посещений — график без списка последних действий
+   ============================================================ */
+.admin-analytics-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: rgba(0,0,0,.56);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.admin-analytics-modal.is-open{
+  display: flex;
+}
+
+.admin-analytics-panel{
+  position: relative;
+  width: min(1180px, 96vw);
+  max-height: min(92vh, 980px);
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 28px;
+  background: rgba(24,28,33,.96);
+  color: rgba(255,255,255,.92);
+  box-shadow: 0 32px 90px rgba(0,0,0,.52);
+  padding: 30px;
+}
+
+.admin-analytics-panel h2{
+  margin: 0 60px 8px 0;
+  font-size: 28px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.admin-analytics-panel p{
+  margin: 0 0 20px;
+  color: rgba(255,255,255,.62);
+  letter-spacing: 1.2px;
+}
+
+.admin-analytics-close{
+  position: absolute;
+  right: 28px;
+  top: 26px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 15px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-analytics-filters{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 22px;
+}
+
+.admin-analytics-filters button,
+.admin-analytics-actions button{
+  border: 0;
+  border-radius: 13px;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.86);
+  padding: 12px 18px;
+  cursor: pointer;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  transition: transform .16s ease, background .16s ease;
+}
+
+.admin-analytics-filters button:hover,
+.admin-analytics-actions button:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.13);
+}
+
+.admin-analytics-filters button.is-active{
+  background: rgba(169,78,101,.88);
+  color: #fff;
+}
+
+.admin-analytics-cards{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-analytics-card{
+  min-height: 112px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  background: rgba(255,255,255,.06);
+}
+
+.admin-analytics-card small{
+  display: block;
+  margin-bottom: 14px;
+  color: rgba(255,255,255,.62);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.admin-analytics-card strong{
+  font-size: 34px;
+  line-height: 1;
+}
+
+.admin-analytics-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0 20px;
+}
+
+.admin-analytics-meta span{
+  border-radius: 999px;
+  background: rgba(255,255,255,.07);
+  padding: 10px 14px;
+  color: rgba(255,255,255,.72);
+}
+
+.admin-analytics-chart-card,
+.admin-analytics-columns section{
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 20px;
+  background: rgba(255,255,255,.045);
+  padding: 20px;
+}
+
+.admin-analytics-section-title{
+  margin: 0 0 14px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.admin-analytics-legend{
+  display: flex;
+  gap: 16px;
+  margin: -4px 0 12px;
+  color: rgba(255,255,255,.66);
+  font-size: 13px;
+}
+
+.admin-analytics-legend span{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-analytics-legend i{
+  width: 24px;
+  height: 6px;
+  border-radius: 999px;
+  background: #b95b70;
+}
+
+.admin-analytics-legend i.is-visitors{
+  background: #8ea6b8;
+}
+
+.admin-analytics-chart{
+  display: block;
+  width: 100%;
+  min-height: 250px;
+  overflow: visible;
+}
+
+.admin-analytics-chart__grid{
+  stroke: rgba(255,255,255,.09);
+  stroke-width: 1;
+}
+
+.admin-analytics-chart__axis,
+.admin-analytics-chart__label{
+  fill: rgba(255,255,255,.54);
+  font-size: 12px;
+}
+
+.admin-analytics-chart__bar{
+  fill: rgba(185,91,112,.35);
+}
+
+.admin-analytics-chart__line{
+  fill: none;
+  stroke: #c26279;
+  stroke-width: 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.admin-analytics-chart__line--visitors{
+  stroke: #8ea6b8;
+  stroke-width: 3;
+  opacity: .92;
+}
+
+.admin-analytics-chart__dot{
+  fill: #e8a0ae;
+  stroke: rgba(24,28,33,.96);
+  stroke-width: 2;
+}
+
+.admin-analytics-chart__dot--visitors{
+  fill: #c5d7e2;
+}
+
+.admin-analytics-columns{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.admin-analytics-row{
+  margin: 0 0 14px;
+}
+
+.admin-analytics-row__top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+  color: rgba(255,255,255,.86);
+}
+
+.admin-analytics-row__top span{
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.admin-analytics-row__top b{
+  color: #fff;
+}
+
+.admin-analytics-row i{
+  display: block;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b95b70, rgba(185,91,112,.28));
+}
+
+.admin-analytics-empty,
+.admin-analytics-loading{
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(255,255,255,.14);
+  border-radius: 18px;
+  color: rgba(255,255,255,.62);
+}
+
+.admin-analytics-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.admin-analytics-actions button.danger{
+  background: rgba(143,48,60,.8);
+}
+
+@media (max-width: 900px){
+  .admin-analytics-cards,
+  .admin-analytics-columns{
+    grid-template-columns: 1fr;
+  }
+
+  .admin-analytics-panel{
+    padding: 22px;
+  }
+}
+
+/* --- Исправление листания блока «Шедевры коллекции» --- */
+.home-master-viewport{
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.home-master-row{
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 92px;
+  height: 100%;
+  transition: transform .45s ease;
+  will-change: transform;
+}
+
+.home-master-card{
+  flex: 0 0 calc((100% - 184px) / 3);
+  min-width: 0;
+}
+
+.home-master-arrow:disabled{
+  opacity: .25;
+  cursor: default;
+  pointer-events: none;
+}
+
+.home-master-dots button{
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.45);
+  cursor: pointer;
+  transition: transform .2s ease, background .2s ease;
+}
+
+.home-master-dots button.is-active{
+  background: rgba(255,255,255,.92);
+  transform: scale(1.25);
+}
+
+.admin-masterpiece-label{
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  background: rgba(255,255,255,.045);
+  color: #fff;
+  cursor: pointer;
+}
+
+.admin-masterpiece-label input{
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0;
+  accent-color: var(--yellow, #ffdd00);
+}
+
+.admin-masterpiece-label small{
+  display: block;
+  margin-top: 3px;
+  color: rgba(255,255,255,.64);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+body.admin-form-nav .admin-masterpiece-label{
+  display: none !important;
+}
+
+@media (max-width: 1100px){
+  .home-master-card{ flex-basis: calc((100% - 38px) / 2); }
+}
+
+@media (max-width: 700px){
+  .home-master-card{ flex-basis: 100%; }
+}
